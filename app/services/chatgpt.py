@@ -1,7 +1,7 @@
 import os
 import openai
 import json
-from type.openaiResponse import json_format
+from type.openai_response import json_format
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
