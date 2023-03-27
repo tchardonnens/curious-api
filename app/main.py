@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from services.chatgpt import chatgpt
 from type.common import Prompt
+import json
 
 app = FastAPI()
 

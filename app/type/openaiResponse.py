@@ -21,3 +21,32 @@ class ChatGPTResponse(BaseModel):
     model: str
     usage: ChatGPTUsage
     choices: ChatGPTChoice
+
+json_format = """{
+   "resources":[
+      {
+         "basic_subjects":[
+            {
+               "name":"Subject 1",
+               "description":"Description 1"
+            },
+            {
+               "name":"Subject 2",
+               "description":"Description 2"
+            }
+         ]
+      },
+      {
+         "deeper_subjects":[
+            {
+               "name":"Subject 1",
+               "description":"Description 1"
+            },
+            {
+               "name":"Subject 2",
+               "description":"Description 2"
+            }
+         ]
+      }
+   ]
+}"""
