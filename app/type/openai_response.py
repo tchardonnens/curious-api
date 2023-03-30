@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 
+
 class ChatGPTUsage(BaseModel):
     prompt_tokens: int
     completion_tokens: int

@@ -11,6 +11,8 @@ from google.oauth2.credentials import Credentials
 import googleapiclient.discovery
 import googleapiclient.errors
 
+from type.youtube_response import YoutubeSearchList, YoutubeVideoSimple
+
 scopes = ["https://www.googleapis.com/auth/youtube.force-ssl"]
 api_service_name = "youtube"
 api_version = "v3"
@@ -28,7 +30,7 @@ async def get_credentials() -> Credentials:
     credentials = flow.run_local_server(port=8080)
     return credentials
 
-def search_videos(query: str, credentials) -> dict:
+def search_videos(query: str, credentials) -> YoutubeSearchList:
     youtube = googleapiclient.discovery.build(
         api_service_name, api_version, credentials=credentials)
     request = youtube.search().list(
@@ -41,3 +43,24 @@ def search_videos(query: str, credentials) -> dict:
     )
     response = request.execute()
     return response
+
+def __scroll_through_videos__(subject, credentials: Credentials) -> list[YoutubeVideoSimple]:
+    yt_videos_list = search_videos(subject["name"], credentials)
+    videos = []
+    for video in yt_videos_list["items"]:
+        video_info = YoutubeVideoSimple(
+            title=video["snippet"]["title"],
+            description=video["snippet"]["description"],
+            url=f"https://www.youtube.com/watch?v={video['id']['videoId']}",
+            thumbnail=video["snippet"]["thumbnails"]["default"]["url"]
+        )
+        videos.append(video_info)
+    return videos
+
+def fetch_videos(basic_subjects: list, deeper_subjects: list, credentials: Credentials) -> list[YoutubeVideoSimple]:
+    videos = []
+    for subject in basic_subjects:
+        videos.append(__scroll_through_videos__(subject, credentials))
+    for subject in deeper_subjects:
+        videos.append(__scroll_through_videos__(subject, credentials))
+    return videos
