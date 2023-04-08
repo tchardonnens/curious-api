@@ -44,23 +44,25 @@ def search_videos(query: str, credentials) -> YoutubeSearchList:
     response = request.execute()
     return response
 
-def __scroll_through_videos__(subject, credentials: Credentials) -> list[YoutubeVideoSimple]:
-    yt_videos_list = search_videos(subject["name"], credentials)
+def __scroll_videos__(subject, credentials: Credentials) -> list[YoutubeVideoSimple]:
+    yt_videos_list = search_videos(subject, credentials)
     videos = []
-    for video in yt_videos_list["items"]:
-        video_info = YoutubeVideoSimple(
-            title=video["snippet"]["title"],
-            description=video["snippet"]["description"],
-            url=f"https://www.youtube.com/watch?v={video['id']['videoId']}",
-            thumbnail=video["snippet"]["thumbnails"]["default"]["url"]
-        )
-        videos.append(video_info)
+    # check if there are videos
+    if yt_videos_list["items"]:
+        for video in yt_videos_list["items"]:
+            # check if the video has an id
+            if "videoId" in video["id"]:
+                video_info = YoutubeVideoSimple(
+                    title=video["snippet"]["title"],
+                    description=video["snippet"]["description"],
+                    url=f"https://www.youtube.com/watch?v={video['id']['videoId']}",
+                    thumbnail=video["snippet"]["thumbnails"]["default"]["url"]
+                )
+                videos.append(video_info)
     return videos
 
-def fetch_videos(basic_subjects: list, deeper_subjects: list, credentials: Credentials) -> list[YoutubeVideoSimple]:
+def fetch_videos(subjects: list, credentials: Credentials) -> list[YoutubeVideoSimple]:
     videos = []
-    for subject in basic_subjects:
-        videos.append(__scroll_through_videos__(subject, credentials))
-    for subject in deeper_subjects:
-        videos.append(__scroll_through_videos__(subject, credentials))
+    for subject in subjects:
+        videos.append(__scroll_videos__(subject, credentials))
     return videos
