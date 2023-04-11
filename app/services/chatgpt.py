@@ -8,7 +8,7 @@ from type.openai_response import json_format
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-llm = OpenAI(temperature=0.9)
+llm = OpenAI(temperature=0.5)
 
 def gpt_response(prompt: str) -> str:
     crafted_prompt = PromptTemplate(
