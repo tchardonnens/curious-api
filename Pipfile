@@ -11,6 +11,7 @@ google-auth-oauthlib = "*"
 langchain = "*"
 redis = "*"
 pytest = "*"
+aiohttp = "*"
 
 [dev-packages]
 
