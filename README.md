@@ -1,7 +1,7 @@
 # Curious API
 Knowledge portal backend with FastAPI
 
-https://imgur.com/57HJL8u
+![lama](https://i.imgur.com/dv1ChQT.jpeg)
 
 ---
 
