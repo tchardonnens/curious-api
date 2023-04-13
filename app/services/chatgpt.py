@@ -8,12 +8,12 @@ from type.openai_response import json_format
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-llm = OpenAI(temperature=0.9)
+llm = OpenAI(temperature=0.5)
 
 def gpt_response(prompt: str) -> str:
     crafted_prompt = PromptTemplate(
         input_variables=["subject"],
-        template="I want to know more about {subject}. Give me a paragraph to understand it better.",
+        template="ℹ️ More about {subject}. 📝 Paragraph please.",
     )
     chain = LLMChain(llm=llm, prompt=crafted_prompt)
     output = chain.run({"subject": prompt})
@@ -22,7 +22,7 @@ def gpt_response(prompt: str) -> str:
 def gpt_list_response(prompt: str) -> list:
     crafted_prompt = PromptTemplate(
         input_variables=["subject"],
-        template="I want to know more about {subject}. Give a list of subjects to study to understand it better.",
+        template="List subjects to better understand {subject}.",
     )
     chain = LLMChain(llm=llm, prompt=crafted_prompt)
     output = chain.run({"subject": prompt})
@@ -31,11 +31,11 @@ def gpt_list_response(prompt: str) -> list:
 
 def gpt_json_response(prompt: str) -> dict:
     crafted_prompt = PromptTemplate(
-        input_variables=["subject", "json_format"],
-        template="I want to know more about {subject}. Format it in the following JSON: {json_format}",
+        input_variables=["json_format", "subject"],
+        template="📚 JSON: {json_format} for {subject}.",
     )
     chain = LLMChain(llm=llm, prompt=crafted_prompt)
-    response = chain.run({"subject": prompt, "json_format": json_format})
+    response = chain.run({"json_format": json_format, "subject": prompt})
     print(response)
     data = json.loads(response)
     return data

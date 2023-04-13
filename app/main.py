@@ -1,4 +1,3 @@
-import os
 from fastapi import FastAPI
 from services.chatgpt import gpt_response
 from services.youtube import get_credentials, fetch_videos, search_videos
