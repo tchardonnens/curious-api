@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "26ec9116345db06c6b2f8542552bae80e06a9d072750eddca0242a0c7fd104ea"
+            "sha256": "a6c01438e703b98583b2e4b672dafa580d8d115905b1a148d407bf7a8fb3c883"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -274,11 +274,11 @@
                 "all"
             ],
             "hashes": [
-                "sha256:99d4fdb10e9dd9a24027ac1d0bd4b56702652056ca17a6c8721eec4ad2f14e18",
-                "sha256:daf73bbe844180200be7966f68e8ec9fd8be57079dff1bacb366db32729e6eb5"
+                "sha256:9569f0a381f8a457ec479d90fa01005cfddaae07546eb1f3fa035bc4797ae7d5",
+                "sha256:a870d443e5405982e1667dfe372663abf10754f246866056336d7f01c21dab07"
             ],
             "index": "pypi",
-            "version": "==0.95.0"
+            "version": "==0.95.1"
         },
         "frozenlist": {
             "hashes": [
@@ -408,6 +408,14 @@
             "markers": "python_version >= '3.7'",
             "version": "==1.59.0"
         },
+        "gptcache": {
+            "hashes": [
+                "sha256:6d5baaed83784164d1cad29423c4e3433a7ae3a8794f7f4785d44ee27691dc19",
+                "sha256:75f63b181e5ce40aff1859711fe9496bd7569e3b2afcac3ec46cd98a8a0ce974"
+            ],
+            "markers": "python_full_version >= '3.8.1'",
+            "version": "==0.1.10"
+        },
         "h11": {
             "hashes": [
                 "sha256:8f19fbbe99e72420ff35c00b27a34cb9937e902a8b810e2c88300c6f0a3b699d",
@@ -517,11 +525,11 @@
         },
         "langchain": {
             "hashes": [
-                "sha256:44f3f3d0819fce055fd859640cafd8af81cc6497daebc2721d1fcf33026fbdf6",
-                "sha256:e9ad24c665c328df48a6a3c4c1335d6117d52fcada4f3a4b71ab2161eb2e8c85"
+                "sha256:2ea43780e1f788333f2b741b119d9870640a92c6f5f2d177d1ca0c98463bd097",
+                "sha256:4ea86ad6192f45c65cbbdc24ff1a56aaac4bee8c038be982981369ca553590df"
             ],
             "index": "pypi",
-            "version": "==0.0.138"
+            "version": "==0.0.139"
         },
         "markupsafe": {
             "hashes": [
@@ -729,7 +737,7 @@
                 "sha256:3b82c867d531e1fd2003d9de2131e1c4bfd4c70b1a3149e0543a555b30807b70",
                 "sha256:9f9d27d26e62c6068f516c0729449954b5ef6994be1a6cbfe7dbefbc84423a04"
             ],
-            "index": "pypi",
+            "markers": "python_full_version >= '3.7.1'",
             "version": "==0.27.4"
         },
         "openapi-schema-pydantic": {

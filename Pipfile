@@ -5,7 +5,6 @@ name = "pypi"
 
 [packages]
 fastapi = {extras = ["all"], version = "*"}
-openai = "*"
 google-api-python-client = "1.6.1"
 google-auth-httplib2 = "*"
 google-auth-oauthlib = "*"
