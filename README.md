@@ -1,6 +1,8 @@
 # Curious API
 Knowledge portal backend with FastAPI
 
+https://imgur.com/57HJL8u
+
 ---
 
 ## Manage packages
