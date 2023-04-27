@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from services.chatgpt import gpt_response
 from services.youtube import get_credentials, fetch_videos, search_videos
-from type.common import Prompt
+from schemas.common import Prompt
 from fastapi.middleware.cors import CORSMiddleware
 import redis
 

@@ -2,7 +2,7 @@ import json
 from langchain.prompts import PromptTemplate
 from langchain.llms import OpenAI
 from langchain.chains import LLMChain
-from type.openai_response import json_format
+from schemas.openai_response import json_format
 
 #openai.api_key = os.getenv("OPENAI_API_KEY")
 

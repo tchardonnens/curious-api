@@ -11,7 +11,7 @@ from google.oauth2.credentials import Credentials
 import googleapiclient.discovery
 import googleapiclient.errors
 
-from type.youtube_response import YoutubeSearchList, YoutubeVideoSimple
+from schemas.youtube_response import YoutubeSearchList, YoutubeVideoSimple
 
 scopes = ["https://www.googleapis.com/auth/youtube.force-ssl"]
 api_service_name = "youtube"
