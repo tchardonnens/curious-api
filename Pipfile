@@ -15,6 +15,7 @@ aiohttp = "*"
 sqlalchemy = "*"
 python-jose = {extras = ["cryptography"], version = "*"}
 passlib = {extras = ["bcrypt"], version = "*"}
+psycopg2 = "*"
 
 [dev-packages]
 

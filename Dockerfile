@@ -19,7 +19,5 @@ COPY . .
 # Expose port 8000
 EXPOSE 8000
 
-WORKDIR /code/app
-
 # Run uvicorn with pipenv
-CMD ["pipenv", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["pipenv", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

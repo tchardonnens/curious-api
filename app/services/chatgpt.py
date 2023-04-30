@@ -2,11 +2,11 @@ import json
 from langchain.prompts import PromptTemplate
 from langchain.llms import OpenAI
 from langchain.chains import LLMChain
-from schemas.openai_response import json_format
 
-#openai.api_key = os.getenv("OPENAI_API_KEY")
+from app.schemas.openai_response import json_format
 
 llm = OpenAI(temperature=0.5)
+
 
 def gpt_response(prompt: str) -> str:
     crafted_prompt = PromptTemplate(
@@ -17,6 +17,7 @@ def gpt_response(prompt: str) -> str:
     output = chain.run({"subject": prompt})
     return output
 
+
 def gpt_list_response(prompt: str) -> list:
     crafted_prompt = PromptTemplate(
         input_variables=["subject"],
@@ -24,8 +25,13 @@ def gpt_list_response(prompt: str) -> list:
     )
     chain = LLMChain(llm=llm, prompt=crafted_prompt)
     output = chain.run({"subject": prompt})
-    output_list = [item.split('. ')[1].strip() for item in output.split('\n') if item.strip() and '. ' in item]
+    output_list = [
+        item.split(". ")[1].strip()
+        for item in output.split("\n")
+        if item.strip() and ". " in item
+    ]
     return output_list
+
 
 def gpt_json_response(prompt: str) -> dict:
     crafted_prompt = PromptTemplate(
