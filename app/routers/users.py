@@ -27,7 +27,7 @@ def get_db():
         db.close()
 
 
-access_token_expire_minutes: float = os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES")
+ACCESS_TOKEN_EXPIRE_MINUTES = float(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
 
 
 @router.post(
@@ -37,7 +37,6 @@ access_token_expire_minutes: float = os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES")
     tags=["users"],
 )
 async def create_user(user: UserCreate, db: Session = Depends(get_db)):
-    print(user)
     return users.create_user(user, db)
 
 
@@ -53,7 +52,7 @@ async def login_for_access_token(
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    access_token_expires = timedelta(minutes=30.0)
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": user.username}, expires_delta=access_token_expires
     )
@@ -71,17 +70,17 @@ async def read_user(id: str, db: Session = Depends(get_db)):
 
 
 @router.get(
-    "/users/{email}", response_model=User, tags=["users"], name="Get User By Email"
+    "/users/mail/{email}", response_model=User, tags=["users"], name="Get User By Email"
 )
 async def read_user(email: str, db: Session = Depends(get_db)):
-    return users.get_user(email, db)
+    return users.get_user_by_email(email, db)
 
 
 @router.get(
-    "/users/{username}",
+    "/users/username/{username}",
     response_model=User,
     tags=["users"],
     name="Get User By Username",
 )
 async def read_user(username: str, db: Session = Depends(get_db)):
-    return users.get_user(username, db)
+    return users.get_user_by_username(username, db)
