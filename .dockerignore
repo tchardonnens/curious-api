@@ -1,0 +1,28 @@
+# Ignore virtual environment directories
+venv/
+__pycache__/
+
+# Ignore local environment files
+.env
+*.env
+
+# Ignore Python cache and compiled files
+*.pyc
+*.pyo
+*.pyd
+*.pyc.ghc
+*.cache
+
+# Ignore logs and databases
+*.log
+*.sqlite
+
+# Ignore test-related files
+tests/
+*.test.py
+
+# Ignore development-specific files
+.vscode/
+.git/
+.gitignore
+*.md
