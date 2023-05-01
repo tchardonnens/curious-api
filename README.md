@@ -1,8 +1,6 @@
 # Curious API
 Knowledge portal backend with FastAPI
 
-![lama](https://i.imgur.com/dv1ChQT.jpeg)
-
 ---
 
 ## Manage packages
