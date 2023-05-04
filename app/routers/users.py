@@ -10,7 +10,7 @@ from app.database import SessionLocal, engine
 from sqlalchemy.orm import Session
 
 from app.schemas.auth import Token
-from app.schemas.users import User, UserCreate, UserInDB
+from app.schemas.users import User, UserCreate
 from app.services.auth import authenticate_user, create_access_token
 from app.crud import users
 

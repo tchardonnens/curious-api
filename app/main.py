@@ -42,6 +42,7 @@ async def startup_event():
         host=os.getenv("REDIS_HOST"),
         port=os.getenv("REDIS_PORT"),
         db=os.getenv("REDIS_DB"),
+        password=os.getenv("REDIS_PASSWORD"),
     )
     cache = redis.Redis(connection_pool=pool)
 
