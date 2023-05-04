@@ -1,7 +1,9 @@
 import logging
+import os
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from api_analytics.fastapi import Analytics
 
 from .routers import contents, users
 
@@ -15,7 +17,7 @@ logging.basicConfig(
 app = FastAPI(
     title="Curious API",
     description="API for the Curious app",
-    version="0.0.1",
+    version="0.1.0",
 )
 
 origins = [
@@ -28,6 +30,11 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+)
+
+app.add_middleware(
+    Analytics,
+    api_key=os.getenv("ANALYTICS_API_KEY"),
 )
 
 
