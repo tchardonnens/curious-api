@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 
 from app.schemas.auth import Token
 from app.schemas.users import User, UserCreate
-from app.services.auth import authenticate_user, create_access_token
+from app.services.auth import authenticate_user, create_access_token, get_current_user
 from app.crud import users
 
 models.Base.metadata.create_all(bind=engine)
@@ -60,19 +60,29 @@ async def login_for_access_token(
 
 
 @router.get("/users/", response_model=list[User], tags=["users"])
-async def read_users(db: Session = Depends(get_db)):
+async def read_users(
+    db: Session = Depends(get_db), current_user: User = Depends(get_current_user)
+):
     return users.get_users(db)
 
 
 @router.get("/users/{id}", response_model=User, tags=["users"], name="Get User By ID")
-async def read_user(id: str, db: Session = Depends(get_db)):
+async def read_user(
+    id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
     return users.get_user(id, db)
 
 
 @router.get(
     "/users/mail/{email}", response_model=User, tags=["users"], name="Get User By Email"
 )
-async def read_user(email: str, db: Session = Depends(get_db)):
+async def read_user(
+    email: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
     return users.get_user_by_email(email, db)
 
 
@@ -82,5 +92,9 @@ async def read_user(email: str, db: Session = Depends(get_db)):
     tags=["users"],
     name="Get User By Username",
 )
-async def read_user(username: str, db: Session = Depends(get_db)):
+async def read_user(
+    username: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
     return users.get_user_by_username(username, db)
