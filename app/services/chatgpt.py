@@ -1,11 +1,14 @@
 import json
 from langchain.prompts import PromptTemplate
 from langchain.llms import OpenAI
+from langchain.chat_models import ChatOpenAI
 from langchain.chains import LLMChain
+from langchain.output_parsers import OutputFixingParser
+from langchain.output_parsers import PydanticOutputParser
 
-from app.schemas.openai_response import json_format
+from app.schemas.openai_response import json_template, AIResponse
 
-llm = OpenAI(temperature=0.5)
+llm = OpenAI(temperature=0.9)
 
 
 def gpt_response(prompt: str) -> str:
@@ -36,10 +39,18 @@ def gpt_list_response(prompt: str) -> list:
 def gpt_json_response(prompt: str) -> dict:
     crafted_prompt = PromptTemplate(
         input_variables=["json_format", "subject"],
-        template="📚 JSON: {json_format} for {subject}.",
+        template="{json_format} \n The advice is about {subject}",
     )
     chain = LLMChain(llm=llm, prompt=crafted_prompt)
-    response = chain.run({"json_format": json_format, "subject": prompt})
-    print(response)
-    data = json.loads(response)
-    return data
+    ai_response = chain.run({"json_format": json_template, "subject": prompt})
+    parser = PydanticOutputParser(pydantic_object=AIResponse)
+
+    try:
+        print("Trying to parse...")
+        res: AIResponse = parser.parse(ai_response)
+    except Exception as e:
+        print("Error in JSON... Fixing...")
+        new_parser = OutputFixingParser.from_llm(parser=parser, llm=ChatOpenAI())
+        res = new_parser.parse(ai_response)
+
+    return res

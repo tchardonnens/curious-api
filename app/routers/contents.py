@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import redis
@@ -7,14 +8,19 @@ from fastapi import Depends
 
 from app import models
 from app.database import SessionLocal, engine
-from app.schemas.openai_response import Prompt
-from app.schemas.custom_response import CustomResponse
+from app.schemas.openai_response import AIResponse, Prompt
+from app.schemas.custom_response import (
+    CleanGoogleResult,
+    CustomResponse,
+    AllSourcesCleanGoogleResult,
+)
 from app.schemas.users import User
 from app.schemas.youtube_response import YoutubeVideoSimple
 from app.services.auth import get_current_user
-from app.services.chatgpt import gpt_response
+from app.services.chatgpt import gpt_response, gpt_json_response
 from app.services.youtube import get_credentials, fetch_videos, search_videos
 from app.schemas.openai_response import Prompt
+from app.services.search import querySearchEngines
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -75,20 +81,35 @@ async def youtube_search(
 
 @router.post(
     "/curious",
-    response_model=CustomResponse,
-    response_description="ChatGPT response and Youtube videos",
+    response_model=list[CustomResponse],
+    response_description="ChatGPT response and Google retrieved contents",
     tags=["contents"],
 )
 async def curious(request: Prompt, current_user: User = Depends(get_current_user)):
     if cache.get(request.prompt):
+        logging.info("Cache hit")
         response: str = cache.get(request.prompt)
+        json_dict = json.loads(response)
+        ai_response = AIResponse.parse_obj(json_dict)
     else:
-        response: str = gpt_response(request.prompt)
-        cache.set(request.prompt, response)
+        logging.info("Cache miss")
+        ai_response: AIResponse = gpt_json_response(request.prompt)
+        json_string = ai_response.json()
+        cache.set(request.prompt, str(json_string))
 
-    credentials = await get_credentials()
-    videos = fetch_videos(response, credentials)
-    return {"chatgpt": response, "content": videos}
+    all_contents: list[CustomResponse] = []
+
+    for subject in ai_response.basic_subjects:
+        contents: AllSourcesCleanGoogleResult = await querySearchEngines(subject)
+        custom_response = CustomResponse(chatgpt=subject.name, content=contents)
+        all_contents.append(custom_response)
+
+    for subject in ai_response.deeper_subjects:
+        contents: AllSourcesCleanGoogleResult = await querySearchEngines(subject)
+        custom_response = CustomResponse(chatgpt=subject.name, content=contents)
+        all_contents.append(custom_response)
+
+    return all_contents
 
 
 @router.on_event("shutdown")
