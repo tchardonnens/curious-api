@@ -31,4 +31,39 @@ class ChatGPTResponse(BaseModel):
     choices: ChatGPTChoice
 
 
-json_format = "{basic_subjects:[{name,description},{name,description}], deeper_subjects:[{name,description},{name,description}]}"
+class Subject(BaseModel):
+    name: str
+    description: str
+
+
+class AIResponse(BaseModel):
+    basic_subjects: list[Subject]
+    deeper_subjects: list[Subject]
+
+
+json_template = """
+Generate a realistic advice in the following JSON format:
+---
+    {
+        "basic_subjects": [
+            {
+                "name": "",
+                "description": ""
+            },
+            {
+                "name": "",
+                "description": ""
+            }
+        ], 
+        "deeper_subjects": [
+            {
+                "name": "",
+                "description": ""
+            },
+            {
+                "name": "",
+                "description": ""
+            }
+        ]
+    }
+"""
