@@ -1,4 +1,6 @@
-from sqlalchemy import Boolean, Column, Integer, String
+from sqlalchemy import Boolean, Column, Integer, String, DateTime, ForeignKey
+from sqlalchemy.orm import relationship
+from datetime import datetime
 
 from .database import Base
 
@@ -12,31 +14,37 @@ class User(Base):
     username = Column(String, unique=True, index=True)
     full_name = Column(String, index=True)
     is_active = Column(Boolean, default=True)
+    prompts = relationship("Prompt", backref="user")
 
 
 class Content(Base):
     __tablename__ = "contents"
 
     id = Column(Integer, primary_key=True, index=True)
-    title = Column(String, unique=True, index=True)
-    description = Column(String, unique=True, index=True)
-    url = Column(String, index=True)
+    title = Column(String, index=True)
+    snippet = Column(String, index=True)
+    link = Column(String, index=True)
+    source = Column(String, index=True)
+    long_description = Column(String, index=True)
+    image = Column(String, index=True)
     is_active = Column(Boolean, default=True)
+    responses = relationship("ResponsePrompt", backref="content")
 
 
 class Prompt(Base):
     __tablename__ = "prompts"
 
     id = Column(Integer, primary_key=True, index=True)
-    title = Column(String, unique=True, index=True)
-    user_id = Column(Integer, index=True)
-    created_at = Column(String, index=True)
+    title = Column(String, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), index=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    responses = relationship("ResponsePrompt", backref="prompt")
 
 
 class ResponsePrompt(Base):
     __tablename__ = "response_prompts"
 
     id = Column(Integer, primary_key=True, index=True)
-    prompt_id = Column(Integer, index=True)
-    content_id = Column(Integer, index=True)
-    created_at = Column(String, index=True)
+    prompt_id = Column(Integer, ForeignKey("prompts.id"), index=True)
+    content_id = Column(Integer, ForeignKey("contents.id"), index=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
