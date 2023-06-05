@@ -49,7 +49,7 @@ async def get_prompt(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    return prompts.get_prompt(db, prompt_id)
+    return prompts.get_prompt(prompt_id, db)
 
 
 @router.post("/prompts", response_model=Prompt, tags=["prompts"])
@@ -69,4 +69,4 @@ async def get_prompt_contents(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    return prompts.get_prompt_contents(db, prompt_id)
+    return prompts.get_prompt_contents(prompt_id, db)

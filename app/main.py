@@ -17,10 +17,10 @@ logging.basicConfig(
 app = FastAPI(
     title="Curious API",
     description="API for the Curious app",
-    version="0.1.0",
+    version="0.3.0",
 )
 
-origins = ["https://verycurious.xyz", "http://localhost:3000"]
+origins = ["https://verycurious.xyz"]
 
 app.add_middleware(
     CORSMiddleware,
