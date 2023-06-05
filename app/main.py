@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from api_analytics.fastapi import Analytics
 
-from .routers import contents, users
+from .routers import contents, users, prompts
 
 # Set the basic configuration for the logger
 logging.basicConfig(
@@ -17,7 +17,7 @@ logging.basicConfig(
 app = FastAPI(
     title="Curious API",
     description="API for the Curious app",
-    version="0.1.0",
+    version="0.3.0",
 )
 
 origins = [
@@ -40,6 +40,7 @@ app.add_middleware(
 
 app.include_router(users.router)
 app.include_router(contents.router)
+app.include_router(prompts.router)
 
 
 @app.get("/", tags=["root"], response_description="Hello World")
