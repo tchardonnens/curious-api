@@ -31,7 +31,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = float(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
 
 
 @router.post(
-    "/users/",
+    "/users",
     response_model=User,
     status_code=status.HTTP_201_CREATED,
     tags=["users"],
@@ -59,7 +59,7 @@ async def login_for_access_token(
     return {"access_token": access_token, "token_type": "bearer"}
 
 
-@router.get("/users/", response_model=list[User], tags=["users"])
+@router.get("/users", response_model=list[User], tags=["users"])
 async def read_users(
     db: Session = Depends(get_db), current_user: User = Depends(get_current_user)
 ):
