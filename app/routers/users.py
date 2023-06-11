@@ -59,14 +59,16 @@ async def login_for_access_token(
     return {"access_token": access_token, "token_type": "bearer"}
 
 
-@router.get("/users", response_model=list[User], tags=["users"])
+@router.get("/users/all", response_model=list[User], tags=["users"])
 async def read_users(
     db: Session = Depends(get_db), current_user: User = Depends(get_current_user)
 ):
     return users.get_users(db)
 
 
-@router.get("/users/{id}", response_model=User, tags=["users"], name="Get User By ID")
+@router.get(
+    "/users/id/{id}", response_model=User, tags=["users"], name="Get User By ID"
+)
 async def read_user(
     id: str,
     db: Session = Depends(get_db),
@@ -98,3 +100,16 @@ async def read_user(
     current_user: User = Depends(get_current_user),
 ):
     return users.get_user_by_username(username, db)
+
+
+@router.get(
+    "/users/me",
+    response_model=User,
+    tags=["users"],
+    name="Get Current User",
+)
+async def read_user(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return users.get_user_by_username(current_user.username, db)
