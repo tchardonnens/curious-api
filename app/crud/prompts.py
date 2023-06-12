@@ -2,9 +2,11 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from app import models
+from app.crud.contents import get_contents
 from app.crud.response_prompt import get_response_prompts_by_id
 from app.schemas import prompts
 from app.crud import users
+from app.schemas.contents import PromptSubjectAndContents
 
 
 def get_prompt_by_id(prompt_id: int, db: Session):
@@ -44,7 +46,7 @@ def create_prompt(prompt: prompts.PromptCreate, db: Session):
         raise HTTPException(status_code=400, detail=str(e))
 
 
-def get_prompt_contents(prompt_id: int, db: Session):
+def get_prompt_contents(prompt_id: int, db: Session) -> PromptSubjectAndContents:
     db_prompt = get_prompt_by_id(prompt_id, db)
     if db_prompt is None:
         raise HTTPException(status_code=400, detail="Prompt not found.")
@@ -53,10 +55,10 @@ def get_prompt_contents(prompt_id: int, db: Session):
         raise HTTPException(status_code=400, detail="No response prompts found.")
     db_contents = []
     for db_response_prompt in db_response_prompts:
-        db_content = (
-            db.query(models.Content)
-            .filter(models.Content.id == db_response_prompt.content_id)
-            .first()
-        )
-        if db_content is not None:
-            db_contents.append(db_content)
+        db_contents = get_contents(db, skip=0, limit=3)
+
+    return PromptSubjectAndContents(
+        prompt=db_prompt,
+        subject=db_response_prompt.ai_response_subject,
+        contents=db_contents,
+    )
