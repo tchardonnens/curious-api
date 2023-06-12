@@ -29,6 +29,6 @@ class AllSourcesContent(BaseModel):
     twitter: list[Content]
 
 
-class PromptAndContentResponse(BaseModel):
-    prompt: Prompt
+class SubjectAndContents(BaseModel):
+    subject: Prompt
     content: AllSourcesContent

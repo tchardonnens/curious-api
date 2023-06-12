@@ -10,14 +10,14 @@ from app import models
 from app.database import SessionLocal, engine
 from sqlalchemy.orm import Session
 from app.schemas.openai_response import AIResponse, Prompt, Subject
-from app.schemas.contents import PromptAndContentResponse
+from app.schemas.contents import SubjectAndContents
 from app.schemas.users import User
 from app.schemas.youtube_response import YoutubeVideoSimple
 from app.services.auth import get_current_user
 from app.services.chatgpt import gpt_response, gpt_json_response
 from app.services.youtube import search_videos
 from app.schemas.openai_response import Prompt
-from app.services.search import querySearchEngines
+from app.services.search import AIResponseSubjectSearchEngines
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -75,7 +75,7 @@ async def youtube_search(
 
 @router.post(
     "/curious",
-    response_model=list[PromptAndContentResponse],
+    response_model=list[SubjectAndContents],
     response_description="ChatGPT response and Google retrieved contents",
     tags=["contents"],
 )
@@ -95,28 +95,35 @@ async def curious(
         json_string = ai_response.json()
         cache.set(request.prompt, str(json_string))
 
-    all_prompt_and_response: list[PromptAndContentResponse] = []
+    all_subject_and_contents: list[SubjectAndContents] = []
 
     async def process_subjects(
+        prompt: str,
         subjects: list[Subject],
-        all_prompt_and_response: list[PromptAndContentResponse],
+        all_subject_and_contents: list[SubjectAndContents],
         user_id: int,
     ):
         for subject in subjects:
-            prompt_and_response: PromptAndContentResponse = await querySearchEngines(
-                subject.name, user_id, db
+            subject_and_contents: SubjectAndContents = (
+                await AIResponseSubjectSearchEngines(prompt, subject.name, user_id, db)
             )
-            all_prompt_and_response.append(prompt_and_response)
-        return all_prompt_and_response
+            all_subject_and_contents.append(subject_and_contents)
+        return all_subject_and_contents
 
-    all_prompt_and_response = []
-    all_prompt_and_response = await process_subjects(
-        ai_response.basic_subjects, all_prompt_and_response, current_user.id
+    all_subject_and_contents = []
+    all_subject_and_contents = await process_subjects(
+        request.prompt,
+        ai_response.basic_subjects,
+        all_subject_and_contents,
+        current_user.id,
     )
-    all_prompt_and_response = await process_subjects(
-        ai_response.deeper_subjects, all_prompt_and_response, current_user.id
+    all_subject_and_contents = await process_subjects(
+        request.prompt,
+        ai_response.deeper_subjects,
+        all_subject_and_contents,
+        current_user.id,
     )
-    return all_prompt_and_response
+    return all_subject_and_contents
 
 
 @router.on_event("shutdown")

@@ -7,12 +7,20 @@ from app.schemas import prompts
 from app.crud import users
 
 
-def get_prompt(prompt_id: int, db: Session):
+def get_prompt_by_id(prompt_id: int, db: Session):
     return db.query(models.Prompt).filter(models.Prompt.id == prompt_id).first()
 
 
 def get_prompt_by_title(title: str, db: Session):
     return db.query(models.Prompt).filter(models.Prompt.title == title).first()
+
+
+def get_prompts_by_user_id(user_id: int, db: Session):
+    return db.query(models.Prompt).filter(models.Prompt.user_id == user_id).all()
+
+
+def get_last_three_prompts_by_user_id(user_id: int, db: Session):
+    return db.query(models.Prompt).filter(models.Prompt.user_id == user_id).all()[-3:]
 
 
 def get_prompts(db: Session, skip: int = 0, limit: int = 100):
@@ -37,7 +45,7 @@ def create_prompt(prompt: prompts.PromptCreate, db: Session):
 
 
 def get_prompt_contents(prompt_id: int, db: Session):
-    db_prompt = get_prompt(prompt_id, db)
+    db_prompt = get_prompt_by_id(prompt_id, db)
     if db_prompt is None:
         raise HTTPException(status_code=400, detail="Prompt not found.")
     db_response_prompts = get_response_prompts_by_id(prompt_id, db)

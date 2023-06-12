@@ -11,7 +11,7 @@ from app.schemas.contents import (
     AllSourcesContent,
     Content,
     ContentBase,
-    PromptAndContentResponse,
+    SubjectAndContents,
 )
 
 SEARCH_API_KEY = os.getenv("SEARCH_API_KEY")
@@ -48,12 +48,12 @@ async def __parse_results__(search_items, source) -> list[ContentBase]:
     return cleaned_results
 
 
-async def __search__(query: str, search_engine_id: str):
+async def __search__(ai_response_subject: str, search_engine_id: str):
     async with httpx.AsyncClient() as client:
         params = {
             "key": SEARCH_API_KEY,
             "cx": search_engine_id,
-            "q": query,
+            "q": ai_response_subject,
             "start": 1,
             "num": 2,
         }
@@ -70,8 +70,9 @@ async def __search__(query: str, search_engine_id: str):
 
 
 async def save_search_and_results(
+    prompt: str,
     user_id: int,
-    query: str,
+    ai_response_subject: str,
     youtube_results: list[Content],
     reddit_results: list[Content],
     twitter_results: list[Content],
@@ -86,14 +87,16 @@ async def save_search_and_results(
             list_of_contents.append(created_content)
             response_prompt.create_response_prompt(
                 ResponsePromptCreate(
-                    prompt_id=created_prompt_id, content_id=created_content.id
+                    prompt_id=created_prompt_id,
+                    content_id=created_content.id,
+                    ai_response_subject=ai_response_subject,
                 ),
                 db,
             )
         return list_of_contents
 
     created_prompt: Prompt = prompts.create_prompt(
-        (PromptCreate(title=str(query), user_id=user_id)), db
+        (PromptCreate(title=str(prompt), user_id=user_id)), db
     )
 
     youtube_results = await save_results(
@@ -109,15 +112,27 @@ async def save_search_and_results(
     )
 
 
-async def querySearchEngines(
-    query: str, user_id: int, db: Session
-) -> PromptAndContentResponse:
+async def AIResponseSubjectSearchEngines(
+    prompt: str, ai_response_subject: str, user_id: int, db: Session
+) -> SubjectAndContents:
     youtube_results, reddit_results, twitter_results = await asyncio.gather(
-        __parse_results__(await __search__(query, YOUTUBE_SEARCH_ENGINE_ID), "youtube"),
-        __parse_results__(await __search__(query, REDDIT_SEARCH_ENGINE_ID), "reddit"),
-        __parse_results__(await __search__(query, TWITTER_SEARCH_ENGINE_ID), "twitter"),
+        __parse_results__(
+            await __search__(ai_response_subject, YOUTUBE_SEARCH_ENGINE_ID), "youtube"
+        ),
+        __parse_results__(
+            await __search__(ai_response_subject, REDDIT_SEARCH_ENGINE_ID), "reddit"
+        ),
+        __parse_results__(
+            await __search__(ai_response_subject, TWITTER_SEARCH_ENGINE_ID), "twitter"
+        ),
     )
     prompt_in_db, contents_in_db = await save_search_and_results(
-        user_id, query, youtube_results, reddit_results, twitter_results, db
+        prompt,
+        user_id,
+        ai_response_subject,
+        youtube_results,
+        reddit_results,
+        twitter_results,
+        db,
     )
-    return PromptAndContentResponse(prompt=prompt_in_db, content=contents_in_db)
+    return SubjectAndContents(subject=prompt_in_db, content=contents_in_db)
