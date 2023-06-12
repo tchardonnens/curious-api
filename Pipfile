@@ -18,6 +18,7 @@ python-jose = {extras = ["cryptography"], version = "*"}
 passlib = {extras = ["bcrypt"], version = "*"}
 psycopg2 = "*"
 fastapi-analytics = "*"
+openai = "*"
 
 [dev-packages]
 
