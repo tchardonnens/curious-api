@@ -47,4 +47,5 @@ class ResponsePrompt(Base):
     id = Column(Integer, primary_key=True, index=True)
     prompt_id = Column(Integer, ForeignKey("prompts.id"), index=True)
     content_id = Column(Integer, ForeignKey("contents.id"), index=True)
+    ai_response_subject = Column(String, index=True)
     created_at = Column(DateTime, default=datetime.utcnow, index=True)

@@ -20,7 +20,9 @@ def get_response_prompts(db: Session, skip: int = 0, limit: int = 100):
 def create_response_prompt(response_prompt: ResponsePromptCreate, db: Session):
     try:
         db_response_prompt = models.ResponsePrompt(
-            prompt_id=response_prompt.prompt_id, content_id=response_prompt.content_id
+            prompt_id=response_prompt.prompt_id,
+            content_id=response_prompt.content_id,
+            ai_response_subject=response_prompt.ai_response_subject,
         )
         db.add(db_response_prompt)
         db.commit()

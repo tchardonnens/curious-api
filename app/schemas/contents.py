@@ -32,3 +32,9 @@ class AllSourcesContent(BaseModel):
 class SubjectAndContents(BaseModel):
     subject: Prompt
     content: AllSourcesContent
+
+
+class PromptSubjectAndContents(BaseModel):
+    prompt: Prompt
+    subject: str
+    contents: list[Content]
