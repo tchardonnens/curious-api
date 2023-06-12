@@ -7,10 +7,12 @@ from fastapi import APIRouter
 from fastapi import Depends
 
 from app import models
+from app.crud import prompts
 from app.database import SessionLocal, engine
 from sqlalchemy.orm import Session
 from app.schemas.openai_response import AIResponse, Prompt, Subject
 from app.schemas.contents import SubjectAndContents
+from app.schemas.prompts import PromptCreate
 from app.schemas.users import User
 from app.schemas.youtube_response import YoutubeVideoSimple
 from app.services.auth import get_current_user
@@ -98,27 +100,30 @@ async def curious(
     all_subject_and_contents: list[SubjectAndContents] = []
 
     async def process_subjects(
-        prompt: str,
+        prompt: Prompt,
         subjects: list[Subject],
         all_subject_and_contents: list[SubjectAndContents],
         user_id: int,
     ):
         for subject in subjects:
             subject_and_contents: SubjectAndContents = (
-                await AIResponseSubjectSearchEngines(prompt, subject.name, user_id, db)
+                await AIResponseSubjectSearchEngines(prompt, subject.name, db)
             )
             all_subject_and_contents.append(subject_and_contents)
         return all_subject_and_contents
 
+    created_prompt: Prompt = prompts.create_prompt(
+        (PromptCreate(title=str(request.prompt), user_id=current_user.id)), db
+    )
     all_subject_and_contents = []
     all_subject_and_contents = await process_subjects(
-        request.prompt,
+        created_prompt,
         ai_response.basic_subjects,
         all_subject_and_contents,
         current_user.id,
     )
     all_subject_and_contents = await process_subjects(
-        request.prompt,
+        created_prompt,
         ai_response.deeper_subjects,
         all_subject_and_contents,
         current_user.id,
