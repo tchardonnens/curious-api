@@ -10,9 +10,9 @@ from app.database import SessionLocal, engine
 from sqlalchemy.orm import Session
 
 from app.schemas.auth import Token
-from app.schemas.users import User, UserCreate
+from app.schemas.users import User, UserCreate, UserWithSocialNetwork
 from app.services.auth import authenticate_user, create_access_token, get_current_user
-from app.crud import users
+from app.crud import followings, users, followers
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -104,7 +104,7 @@ async def read_user(
 
 @router.get(
     "/users/me",
-    response_model=User,
+    response_model=UserWithSocialNetwork,
     tags=["users"],
     name="Get Current User",
 )
@@ -112,4 +112,8 @@ async def read_user(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    return users.get_user_by_username(current_user.username, db)
+    return UserWithSocialNetwork(
+        current_user,
+        len(followers.get_followers_by_user_id(current_user.id, db)),
+        len(followings.get_followings_by_user_id(current_user.id, db)),
+    )

@@ -18,6 +18,14 @@ class UserInDB(UserBase):
 class User(UserBase):
     id: int
     is_active: bool
+    bio: str
+    profile_picture: str
+    profile_banner: str
 
     class Config:
         orm_mode = True
+
+
+class UserWithSocialNetwork(User):
+    followers: list[int]
+    followings: list[int]

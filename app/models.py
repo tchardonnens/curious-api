@@ -13,6 +13,9 @@ class User(Base):
     hashed_password = Column(String)
     username = Column(String, unique=True, index=True)
     full_name = Column(String, index=True)
+    bio = Column(String, index=True)
+    profile_picture = Column(String, index=True)
+    profile_banner = Column(String, index=True)
     is_active = Column(Boolean, default=True)
     prompts = relationship("Prompt", backref="user")
 
@@ -48,4 +51,22 @@ class ResponsePrompt(Base):
     prompt_id = Column(Integer, ForeignKey("prompts.id"), index=True)
     content_id = Column(Integer, ForeignKey("contents.id"), index=True)
     ai_response_subject = Column(String, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+
+
+class Followers(Base):
+    __tablename__ = "followers"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), index=True)
+    follower_id = Column(Integer, ForeignKey("users.id"), index=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+
+
+class Followings(Base):
+    __tablename__ = "followings"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), index=True)
+    following_id = Column(Integer, ForeignKey("users.id"), index=True)
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
