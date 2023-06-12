@@ -108,7 +108,7 @@ async def save_search_and_results(
 
 
 async def AIResponseSubjectSearchEngines(
-    prompt: Prompt, ai_response_subject: str, user_id: int, db: Session
+    prompt: Prompt, ai_response_subject: str, db: Session
 ) -> SubjectAndContents:
     youtube_results, reddit_results, twitter_results = await asyncio.gather(
         __parse_results__(

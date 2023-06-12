@@ -107,7 +107,7 @@ async def curious(
     ):
         for subject in subjects:
             subject_and_contents: SubjectAndContents = (
-                await AIResponseSubjectSearchEngines(prompt, subject.name, user_id, db)
+                await AIResponseSubjectSearchEngines(prompt, subject.name, db)
             )
             all_subject_and_contents.append(subject_and_contents)
         return all_subject_and_contents
