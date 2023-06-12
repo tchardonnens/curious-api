@@ -5,9 +5,13 @@ from langchain.chains import LLMChain
 from langchain.output_parsers import OutputFixingParser
 from langchain.output_parsers import PydanticOutputParser
 
-from app.schemas.openai_response import json_template, AIResponse
+from app.schemas.openai_response import (
+    json_template,
+    json_template_optimized,
+    AIResponse,
+)
 
-llm = OpenAI(temperature=0.9)
+llm = OpenAI(temperature=0.4)
 
 
 def gpt_response(prompt: str) -> str:
@@ -38,10 +42,11 @@ def gpt_list_response(prompt: str) -> list:
 def gpt_json_response(prompt: str) -> dict:
     crafted_prompt = PromptTemplate(
         input_variables=["json_format", "subject"],
-        template="{json_format} \n The advice is about {subject}",
+        template="{json_format} \n The advice is about {subject}.",
     )
     chain = LLMChain(llm=llm, prompt=crafted_prompt)
-    ai_response = chain.run({"json_format": json_template, "subject": prompt})
+    ai_response = chain.run({"json_format": json_template_optimized, "subject": prompt})
+    print(ai_response)
     parser = PydanticOutputParser(pydantic_object=AIResponse)
 
     try:
