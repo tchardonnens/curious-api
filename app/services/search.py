@@ -1,17 +1,15 @@
 import os
 import asyncio
-from typing import Tuple
 import httpx
-from app.crud import prompts, contents, response_prompt
-from app.schemas.prompts import Prompt, PromptCreate
+from app.crud import contents, response_prompt
+from app.schemas.prompts import Prompt
 from app.schemas.response_prompt import ResponsePromptCreate
 from sqlalchemy.orm import Session
 
 from app.schemas.contents import (
-    AllSourcesContent,
     Content,
     ContentBase,
-    SubjectAndContents,
+    PromptSubjectAndContents,
 )
 
 SEARCH_API_KEY = os.getenv("SEARCH_API_KEY")
@@ -76,7 +74,7 @@ async def save_search_and_results(
     reddit_results: list[Content],
     twitter_results: list[Content],
     db: Session,
-) -> Tuple[Prompt, AllSourcesContent]:
+) -> PromptSubjectAndContents:
     async def save_results(
         results: list[ContentBase], source: str, created_prompt_id: int, db: Session
     ):
@@ -102,14 +100,16 @@ async def save_search_and_results(
         twitter_results, "twitter", created_prompt.id, db
     )
 
-    return created_prompt, AllSourcesContent(
-        youtube=youtube_results, reddit=reddit_results, twitter=twitter_results
+    all_sources_content = youtube_results + reddit_results + twitter_results
+
+    return PromptSubjectAndContents(
+        prompt=created_prompt, subject=ai_response_subject, contents=all_sources_content
     )
 
 
 async def AIResponseSubjectSearchEngines(
     prompt: Prompt, ai_response_subject: str, db: Session
-) -> SubjectAndContents:
+) -> PromptSubjectAndContents:
     youtube_results, reddit_results, twitter_results = await asyncio.gather(
         __parse_results__(
             await __search__(ai_response_subject, YOUTUBE_SEARCH_ENGINE_ID), "youtube"
@@ -121,7 +121,7 @@ async def AIResponseSubjectSearchEngines(
             await __search__(ai_response_subject, TWITTER_SEARCH_ENGINE_ID), "twitter"
         ),
     )
-    prompt_in_db, contents_in_db = await save_search_and_results(
+    stored_data = await save_search_and_results(
         prompt,
         ai_response_subject,
         youtube_results,
@@ -129,4 +129,4 @@ async def AIResponseSubjectSearchEngines(
         twitter_results,
         db,
     )
-    return SubjectAndContents(subject=prompt_in_db, content=contents_in_db)
+    return stored_data
