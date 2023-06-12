@@ -70,8 +70,7 @@ async def __search__(ai_response_subject: str, search_engine_id: str):
 
 
 async def save_search_and_results(
-    prompt: str,
-    user_id: int,
+    created_prompt: Prompt,
     ai_response_subject: str,
     youtube_results: list[Content],
     reddit_results: list[Content],
@@ -95,10 +94,6 @@ async def save_search_and_results(
             )
         return list_of_contents
 
-    created_prompt: Prompt = prompts.create_prompt(
-        (PromptCreate(title=str(prompt), user_id=user_id)), db
-    )
-
     youtube_results = await save_results(
         youtube_results, "youtube", created_prompt.id, db
     )
@@ -113,7 +108,7 @@ async def save_search_and_results(
 
 
 async def AIResponseSubjectSearchEngines(
-    prompt: str, ai_response_subject: str, user_id: int, db: Session
+    prompt: Prompt, ai_response_subject: str, user_id: int, db: Session
 ) -> SubjectAndContents:
     youtube_results, reddit_results, twitter_results = await asyncio.gather(
         __parse_results__(
@@ -128,7 +123,6 @@ async def AIResponseSubjectSearchEngines(
     )
     prompt_in_db, contents_in_db = await save_search_and_results(
         prompt,
-        user_id,
         ai_response_subject,
         youtube_results,
         reddit_results,
