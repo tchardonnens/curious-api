@@ -36,20 +36,27 @@ async def startup_event():
     cache = redis.Redis(connection_pool=pool)
 
 
-@router.get("/prompts", response_model=list[Prompt], tags=["prompts"])
+@router.get("/prompts/me", response_model=list[Prompt], tags=["prompts"])
 async def get_prompts(
     db: Session = Depends(get_db), current_user: User = Depends(get_current_user)
 ):
-    return prompts.get_prompts(db)
+    return prompts.get_prompts_by_user_id(current_user.id, db)
+
+
+@router.get("/prompts/profile/me", response_model=list[Prompt], tags=["prompts"])
+async def get_prompts(
+    db: Session = Depends(get_db), current_user: User = Depends(get_current_user)
+):
+    return prompts.get_last_three_prompts_by_user_id(current_user.id, db)
 
 
 @router.get("/prompts/{prompt_id}", response_model=Prompt, tags=["prompts"])
-async def get_prompt(
+async def get_prompt_by_id(
     prompt_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    return prompts.get_prompt(prompt_id, db)
+    return prompts.get_prompt_by_id(prompt_id, db)
 
 
 @router.post("/prompts", response_model=Prompt, tags=["prompts"])
