@@ -85,7 +85,9 @@ async def create_prompt(
 
 
 @router.get(
-    "/prompts/{prompt_id}/contents", response_model=list[Content], tags=["prompts"]
+    "/prompts/{prompt_id}/contents",
+    response_model=list[UserPromptSubjectAndContents],
+    tags=["prompts"],
 )
 async def get_prompt_contents(
     prompt_id: int,
