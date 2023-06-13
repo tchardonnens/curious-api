@@ -2,6 +2,7 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from app import models
+from app.crud import users
 from app.schemas import followings
 
 
@@ -16,6 +17,24 @@ def create_following(following: followings.FollowingCreate, db: Session):
         db_following = models.Followings(
             user_id=following.user_id,
             following_id=following.following_id,
+        )
+        db.add(db_following)
+        db.commit()
+        db.refresh(db_following)
+        return db_following
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+def create_following_by_username(username: str, user_id: int, db: Session):
+    try:
+        db_following = users.get_user_by_username(username, db)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    try:
+        db_following = models.Followings(
+            user_id=user_id,
+            following_id=db_following.id,
         )
         db.add(db_following)
         db.commit()
