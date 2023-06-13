@@ -22,6 +22,14 @@ def get_response_prompts_by_id(prompt_id: int, db: Session):
     )
 
 
+def get_content_ids_by_ai_response_subject(ai_response_subject: str, db: Session):
+    return (
+        db.query(models.ResponsePrompt.content_id)
+        .filter(models.ResponsePrompt.ai_response_subject == ai_response_subject)
+        .all()
+    )
+
+
 def get_response_prompts(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.ResponsePrompt).offset(skip).limit(limit).all()
 
