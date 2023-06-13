@@ -1,10 +1,11 @@
+import logging
 import os
 from fastapi import APIRouter, Depends
 import redis
 from requests import Session
 
 from app import models
-from app.crud import prompts
+from app.crud import followings, prompts, users
 from app.database import SessionLocal, engine
 from app.schemas.contents import Content, PromptSubjectAndContents
 from app.schemas.prompts import PromptBase, Prompt
@@ -86,3 +87,25 @@ async def get_prompt_contents(
     current_user: User = Depends(get_current_user),
 ):
     return prompts.get_prompt_contents(prompt_id, db)
+
+
+@router.get(
+    "/prompts/feed", response_model=list[PromptSubjectAndContents], tags=["prompts"]
+)
+async def get_feed(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    logging.info("Getting feed")
+    # list_of_followings = followings.get_followings_by_user_id(current_user.id, db)
+    # feed = list[PromptSubjectAndContents]
+    # for following in list_of_followings:
+    #     list_of_prompts = prompts.get_last_three_prompts_by_user_id(
+    #         following.following_id, db
+    #     )
+    #     logging.info(list_of_prompts)
+    #     for prompt in list_of_prompts:
+    #         logging.info(prompt)
+    #         prompt_subject_and_contents = prompts.get_prompt_contents(prompt.id, db)
+    #         feed.append(prompt_subject_and_contents)
+    return []

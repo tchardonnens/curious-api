@@ -2,14 +2,14 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from app import models
-from app.schemas import users
+from app.schemas import followers
 
 
 def get_followers_by_user_id(user_id: int, db: Session):
     return db.query(models.Followers).filter(models.Followers.user_id == user_id).all()
 
 
-def create_follower(follower: users.FollowerCreate, db: Session):
+def create_follower(follower: followers.FollowerCreate, db: Session):
     try:
         db_follower = models.Followers(
             user_id=follower.user_id,

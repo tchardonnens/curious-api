@@ -26,6 +26,7 @@ class User(UserBase):
         orm_mode = True
 
 
-class UserWithSocialNetwork(User):
-    followers: list[int]
-    followings: list[int]
+class UserWithSocialNetwork(BaseModel):
+    user: User
+    followers: int
+    followings: int

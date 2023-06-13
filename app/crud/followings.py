@@ -2,7 +2,7 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from app import models
-from app.schemas import users
+from app.schemas import followings
 
 
 def get_followings_by_user_id(user_id: int, db: Session):
@@ -11,7 +11,7 @@ def get_followings_by_user_id(user_id: int, db: Session):
     )
 
 
-def create_following(following: users.FollowingCreate, db: Session):
+def create_following(following: followings.FollowingCreate, db: Session):
     try:
         db_following = models.Followings(
             user_id=following.user_id,
