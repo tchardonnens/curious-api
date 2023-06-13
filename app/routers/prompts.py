@@ -85,14 +85,16 @@ async def create_prompt(
 
 
 @router.get(
-    "/prompts/{prompt_id}/contents", response_model=list[Content], tags=["prompts"]
+    "/prompts/{prompt_id}/contents",
+    response_model=list[PromptSubjectAndContents],
+    tags=["prompts"],
 )
 async def get_prompt_contents(
     prompt_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    return prompts.get_prompt_contents(prompt_id, db)
+    return prompts.get_prompt_contents_history(prompt_id, db)
 
 
 @router.get(
