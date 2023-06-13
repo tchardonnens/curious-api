@@ -138,6 +138,25 @@ async def follow_user(
     return follow
 
 
+@router.post(
+    "/users/follow/username/{following_username}",
+    response_model=Following,
+    tags=["users"],
+    name="Follow User",
+)
+async def follow_user(
+    following_username: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    follow = followings.create_following_by_username(
+        following_username,
+        current_user.id,
+        db,
+    )
+    return follow
+
+
 @router.delete(
     "/users/follow/{following_id}",
     response_model=Following,
@@ -152,7 +171,7 @@ async def unfollow_user(
     follow = followings.delete_following(
         {"user_id": current_user.id, "following_id": following_id}, db
     )
-    return follow
+    return {"message": "Unfollowed successfully {following_id}"}
 
 
 @router.get(
