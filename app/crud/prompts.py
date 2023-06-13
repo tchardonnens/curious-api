@@ -1,12 +1,17 @@
+import logging
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from app import models
+from app.crud import contents
 from app.crud.contents import get_contents
-from app.crud.response_prompt import get_response_prompts_by_id
+from app.crud.response_prompt import (
+    get_response_prompts_by_id,
+    get_three_response_prompts_by_id,
+)
 from app.schemas import prompts
 from app.crud import users
-from app.schemas.contents import PromptSubjectAndContents
+from app.schemas.contents import PromptSubjectAndContents, UserPromptSubjectAndContents
 
 
 def get_prompt_by_id(prompt_id: int, db: Session):
@@ -46,18 +51,22 @@ def create_prompt(prompt: prompts.PromptCreate, db: Session):
         raise HTTPException(status_code=400, detail=str(e))
 
 
-def get_prompt_contents(prompt_id: int, db: Session) -> PromptSubjectAndContents:
+def get_prompt_contents(prompt_id: int, db: Session) -> UserPromptSubjectAndContents:
     db_prompt = get_prompt_by_id(prompt_id, db)
     if db_prompt is None:
         raise HTTPException(status_code=400, detail="Prompt not found.")
-    db_response_prompts = get_response_prompts_by_id(prompt_id, db)
+    db_user = users.get_user(db_prompt.user_id, db)
+    if db_user is None:
+        raise HTTPException(status_code=400, detail="User not found.")
+    db_response_prompts = get_three_response_prompts_by_id(prompt_id, db)
     if db_response_prompts is None:
         raise HTTPException(status_code=400, detail="No response prompts found.")
     db_contents = []
     for db_response_prompt in db_response_prompts:
-        db_contents = get_contents(db, skip=0, limit=3)
+        db_contents.append(contents.get_content(db_response_prompt.content_id, db))
 
-    return PromptSubjectAndContents(
+    return UserPromptSubjectAndContents(
+        user=db_user,
         prompt=db_prompt,
         subject=db_response_prompt.ai_response_subject,
         contents=db_contents,

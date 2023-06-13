@@ -1,5 +1,7 @@
 from pydantic import BaseModel
+
 from .prompts import Prompt
+from .users import User
 
 
 class ContentBase(BaseModel):
@@ -35,6 +37,13 @@ class SubjectAndContents(BaseModel):
 
 
 class PromptSubjectAndContents(BaseModel):
+    prompt: Prompt
+    subject: str
+    contents: list[Content]
+
+
+class UserPromptSubjectAndContents(BaseModel):
+    user: User
     prompt: Prompt
     subject: str
     contents: list[Content]

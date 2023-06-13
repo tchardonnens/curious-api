@@ -7,7 +7,11 @@ from requests import Session
 from app import models
 from app.crud import followings, prompts, users
 from app.database import SessionLocal, engine
-from app.schemas.contents import Content, PromptSubjectAndContents
+from app.schemas.contents import (
+    Content,
+    PromptSubjectAndContents,
+    UserPromptSubjectAndContents,
+)
 from app.schemas.prompts import PromptBase, Prompt
 from app.schemas.users import User
 from app.services.auth import get_current_user
@@ -53,9 +57,11 @@ async def get_prompts(
     db: Session = Depends(get_db), current_user: User = Depends(get_current_user)
 ):
     list_of_prompts = prompts.get_last_three_prompts_by_user_id(current_user.id, db)
+    logging.info(list_of_prompts[0].title)
     list_of_contents = []
     for prompt in list_of_prompts:
         content_for_prompt = prompts.get_prompt_contents(prompt.id, db)
+        logging.info(content_for_prompt.subject)
         list_of_contents.append(content_for_prompt)
     return list_of_contents
 
@@ -89,21 +95,20 @@ async def get_prompt_contents(
     return prompts.get_prompt_contents(prompt_id, db)
 
 
-@router.get("/feed", response_model=list[PromptSubjectAndContents], tags=["prompts"])
+@router.get(
+    "/feed", response_model=list[UserPromptSubjectAndContents], tags=["prompts"]
+)
 async def get_feed(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    logging.info("Getting feed")
     list_of_followings = followings.get_followings_by_user_id(current_user.id, db)
     feed = []  # Correctly initialize an empty list
     for following in list_of_followings:
         list_of_prompts = prompts.get_last_three_prompts_by_user_id(
             following.following_id, db
         )
-        logging.info(list_of_prompts)
         for prompt in list_of_prompts:
-            logging.info(prompt)
             prompt_subject_and_contents = prompts.get_prompt_contents(prompt.id, db)
             feed.append(prompt_subject_and_contents)
     return feed  # Return the feed list
