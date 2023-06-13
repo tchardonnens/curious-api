@@ -5,10 +5,19 @@ from app import models
 from app.schemas.response_prompt import ResponsePromptCreate
 
 
-def get_response_prompts_by_id(response_prompt_id: int, db: Session):
+def get_three_response_prompts_by_id(prompt_id: int, db: Session):
     return (
         db.query(models.ResponsePrompt)
-        .filter(models.ResponsePrompt.id == response_prompt_id)
+        .filter(models.ResponsePrompt.prompt_id == prompt_id)
+        .limit(3)
+        .all()
+    )
+
+
+def get_response_prompts_by_id(prompt_id: int, db: Session):
+    return (
+        db.query(models.ResponsePrompt)
+        .filter(models.ResponsePrompt.prompt_id == prompt_id)
         .all()
     )
 
