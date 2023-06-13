@@ -13,6 +13,17 @@ class User(Base):
     hashed_password = Column(String)
     username = Column(String, unique=True, index=True)
     full_name = Column(String, index=True)
+    bio = Column(String, index=True, default="Lorem ipsum")
+    profile_picture = Column(
+        String,
+        index=True,
+        default="https://media.licdn.com/dms/image/D4E03AQFuIj2EaSDYbg/profile-displayphoto-shrink_400_400/0/1685128811345?e=1692230400&v=beta&t=KeMgavxd3GBhIJLcYvQZtsv4yeNg3LdPsYzHQZ41MQw",
+    )
+    profile_banner = Column(
+        String,
+        index=True,
+        default="https://pbs.twimg.com/profile_banners/1500074670917312513/1646482168/1500x500",
+    )
     is_active = Column(Boolean, default=True)
     prompts = relationship("Prompt", backref="user")
 
@@ -48,4 +59,22 @@ class ResponsePrompt(Base):
     prompt_id = Column(Integer, ForeignKey("prompts.id"), index=True)
     content_id = Column(Integer, ForeignKey("contents.id"), index=True)
     ai_response_subject = Column(String, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+
+
+class Followers(Base):
+    __tablename__ = "followers"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), index=True)
+    follower_id = Column(Integer, ForeignKey("users.id"), index=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+
+
+class Followings(Base):
+    __tablename__ = "followings"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), index=True)
+    following_id = Column(Integer, ForeignKey("users.id"), index=True)
     created_at = Column(DateTime, default=datetime.utcnow, index=True)

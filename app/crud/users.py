@@ -4,7 +4,6 @@ from sqlalchemy.orm import Session
 from app import models
 from app.schemas import users
 from passlib.context import CryptContext
-from sqlalchemy.orm import Session
 
 from app.services.auth import get_password_hash
 
