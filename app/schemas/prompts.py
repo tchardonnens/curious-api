@@ -4,6 +4,7 @@ from datetime import datetime
 
 class PromptBase(BaseModel):
     title: str
+    keywords: str
     user_id: int
 
 

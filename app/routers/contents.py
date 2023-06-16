@@ -11,12 +11,11 @@ from app.crud import prompts
 from app.database import SessionLocal, engine
 from sqlalchemy.orm import Session
 from app.schemas.openai_response import AIResponse, Prompt, Subject
-from app.schemas.contents import PromptSubjectAndContents, SubjectAndContents
+from app.schemas.contents import PromptSubjectAndContents
 from app.schemas.prompts import PromptCreate
 from app.schemas.users import User
 from app.services.auth import get_current_user
 from app.services.chatgpt import gpt_json_response
-from app.schemas.openai_response import Prompt
 from app.services.search import AIResponseSubjectSearchEngines
 
 models.Base.metadata.create_all(bind=engine)
@@ -64,6 +63,7 @@ async def chat(request: Prompt, current_user: User = Depends(get_current_user)):
     if (
         ai_response.basic_subjects[0].detailed_name
         or ai_response.deeper_subjects[0].detailed_name
+        or ai_response.main_subject_of_the_prompt
     ) == "string":
         # change http status code to 404
         return {"detail": "No subject found, LLM failed"}
@@ -108,7 +108,14 @@ async def curious(
         return all_prompt_subjects_and_contents
 
     created_prompt: Prompt = prompts.create_prompt(
-        (PromptCreate(title=str(request.prompt), user_id=current_user.id)), db
+        (
+            PromptCreate(
+                title=str(request.prompt),
+                keywords=ai_response.main_subject_of_the_prompt,
+                user_id=current_user.id,
+            )
+        ),
+        db,
     )
     all_prompt_subjects_and_contents = []
     if ai_response.basic_subjects != "string":

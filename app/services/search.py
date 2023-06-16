@@ -46,12 +46,12 @@ async def __parse_results__(search_items, source) -> list[ContentBase]:
     return cleaned_results
 
 
-async def __search__(ai_response_subject: str, search_engine_id: str):
+async def __search__(query: str, search_engine_id: str):
     async with httpx.AsyncClient() as client:
         params = {
             "key": SEARCH_API_KEY,
             "cx": search_engine_id,
-            "q": ai_response_subject,
+            "q": query,
             "start": 1,
             "num": 2,
         }
@@ -110,16 +110,11 @@ async def save_search_and_results(
 async def AIResponseSubjectSearchEngines(
     prompt: Prompt, ai_response_subject: str, db: Session
 ) -> PromptSubjectAndContents:
+    query = f"{prompt.keywords} {ai_response_subject}"
     youtube_results, reddit_results, twitter_results = await asyncio.gather(
-        __parse_results__(
-            await __search__(ai_response_subject, YOUTUBE_SEARCH_ENGINE_ID), "youtube"
-        ),
-        __parse_results__(
-            await __search__(ai_response_subject, REDDIT_SEARCH_ENGINE_ID), "reddit"
-        ),
-        __parse_results__(
-            await __search__(ai_response_subject, TWITTER_SEARCH_ENGINE_ID), "twitter"
-        ),
+        __parse_results__(await __search__(query, YOUTUBE_SEARCH_ENGINE_ID), "youtube"),
+        __parse_results__(await __search__(query, REDDIT_SEARCH_ENGINE_ID), "reddit"),
+        __parse_results__(await __search__(query, TWITTER_SEARCH_ENGINE_ID), "twitter"),
     )
     stored_data = await save_search_and_results(
         prompt,

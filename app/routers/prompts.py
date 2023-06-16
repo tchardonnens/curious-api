@@ -5,10 +5,9 @@ import redis
 from requests import Session
 
 from app import models
-from app.crud import followings, prompts, users
+from app.crud import followings, prompts
 from app.database import SessionLocal, engine
 from app.schemas.contents import (
-    Content,
     PromptSubjectAndContents,
     UserPromptSubjectAndContents,
 )

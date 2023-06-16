@@ -47,6 +47,7 @@ class Prompt(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, index=True)
+    keywords = Column(String, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), index=True)
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
     responses = relationship("ResponsePrompt", backref="prompt")

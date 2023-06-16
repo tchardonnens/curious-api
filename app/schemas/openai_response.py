@@ -7,9 +7,11 @@ class Prompt(BaseModel):
 
 class Subject(BaseModel):
     detailed_name: str
+    description: str
 
 
 class AIResponse(BaseModel):
+    main_subject_of_the_prompt: str
     basic_subjects: list[Subject]
     deeper_subjects: list[Subject]
 
@@ -18,6 +20,7 @@ json_template = """
 Generate a realistic advice in the following JSON format:
 ---
     {
+        "main_suject_of_the_prompt": "",
         "basic_subjects": [
             {
                 "detailed_name": "",
@@ -36,29 +39,6 @@ Generate a realistic advice in the following JSON format:
             {
                 "detailed_name": "",
                 "description": ""
-            }
-        ]
-    }
-"""
-
-json_template_optimized = """
-Generate a realistic advice in the following JSON format:
----
-    {
-        "basic_subjects": [
-            {
-                "detailed_name": ""
-            },
-            {
-                "detailed_name": ""
-            }
-        ], 
-        "deeper_subjects": [
-            {
-                "detailed_name": ""
-            },
-            {
-                "detailed_name": ""
             }
         ]
     }
