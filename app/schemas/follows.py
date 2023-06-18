@@ -1,16 +1,16 @@
 from pydantic import BaseModel
 
 
-class FollowerBase(BaseModel):
+class FollowBase(BaseModel):
     user_id: int
-    follower_id: int
+    follow_id: int
 
 
-class FollowerCreate(FollowerBase):
+class FollowCreate(FollowBase):
     pass
 
 
-class Follower(FollowerBase):
+class Follow(FollowBase):
     id: int
 
     class Config:

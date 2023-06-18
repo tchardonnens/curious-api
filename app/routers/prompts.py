@@ -5,7 +5,7 @@ import redis
 from requests import Session
 
 from app import models
-from app.crud import followings, prompts
+from app.crud import follows, prompts
 from app.database import SessionLocal, engine
 from app.schemas.contents import (
     PromptSubjectAndContents,
@@ -103,11 +103,11 @@ async def get_feed(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    list_of_followings = followings.get_followings_by_user_id(current_user.id, db)
+    list_of_follows = follows.get_follows_by_user_id(current_user.id, db)
     feed = []  # Correctly initialize an empty list
-    for following in list_of_followings:
+    for follow in list_of_follows:
         list_of_prompts = prompts.get_last_three_prompts_by_user_id(
-            following.following_id, db
+            follow.follow_id, db
         )
         for prompt in list_of_prompts:
             prompt_subject_and_contents = prompts.get_prompt_contents(prompt.id, db)

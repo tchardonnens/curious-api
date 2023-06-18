@@ -10,10 +10,10 @@ from app.database import SessionLocal, engine
 from sqlalchemy.orm import Session
 
 from app.schemas.auth import Token
-from app.schemas.followings import Following, FollowingCreate
+from app.schemas.follows import Follow, FollowCreate
 from app.schemas.users import User, UserCreate, UserWithSocialNetwork
 from app.services.auth import authenticate_user, create_access_token, get_current_user
-from app.crud import followings, users, followers
+from app.crud import follows, users
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -115,42 +115,42 @@ async def read_user(
 ):
     return UserWithSocialNetwork(
         user=current_user,
-        followers=len(followers.get_followers_by_user_id(current_user.id, db)),
-        followings=len(followings.get_followings_by_user_id(current_user.id, db)),
+        follows=len(follows.get_follows_by_user_id(current_user.id, db)),
+        followers=len(follows.get_followers_by_user_id(current_user.id, db)),
     )
 
 
 @router.post(
-    "/users/follow/{following_id}",
-    response_model=Following,
+    "/users/follow/{follow_id}",
+    response_model=Follow,
     tags=["users"],
     name="Follow User",
 )
 async def follow_user(
-    following_id: int,
+    follow_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    follow = followings.create_following(
-        FollowingCreate(**{"user_id": current_user.id, "following_id": following_id}),
+    follow = follows.create_follow(
+        FollowCreate(**{"user_id": current_user.id, "follow_id": follow_id}),
         db,
     )
     return follow
 
 
 @router.post(
-    "/users/follow/username/{following_username}",
-    response_model=Following,
+    "/users/follow/username/{follow_username}",
+    response_model=Follow,
     tags=["users"],
     name="Follow User",
 )
 async def follow_user(
-    following_username: str,
+    follow_username: str,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    follow = followings.create_following_by_username(
-        following_username,
+    follow = follows.create_follow_by_username(
+        follow_username,
         current_user.id,
         db,
     )
@@ -158,59 +158,74 @@ async def follow_user(
 
 
 @router.delete(
-    "/users/follow/{following_id}",
-    response_model=Following,
+    "/users/follow/{follow_id}",
     tags=["users"],
     name="Unfollow User",
 )
 async def unfollow_user(
-    following_id: int,
+    follow_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    follow = followings.delete_following(
-        {"user_id": current_user.id, "following_id": following_id}, db
-    )
-    return {"message": "Unfollowed successfully {following_id}"}
+    follows.delete_follow(current_user.id, follow_id, db)
+    return {"message": "Unfollowed successfully user_id: {}".format(follow_id)}
 
 
 @router.get(
-    "/users/followers",
+    "/users/follows/me",
     response_model=list[User],
     tags=["users"],
-    name="Get Followers",
+    name="Get follows",
+)
+async def get_follows(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    follow_list = follows.get_follows_by_user_id(current_user.id, db)
+    # return list of users that current user is follow
+    return [users.get_user(follow.follow_id, db) for follow in follow_list]
+
+
+@router.get(
+    "/users/follows/id/{user_id}",
+    response_model=list[User],
+    tags=["users"],
+    name="Get follows",
+)
+async def get_follows(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    follow_list = follows.get_follows_by_user_id(user_id, db)
+    # return list of users that current user is follow
+    return [users.get_user(follow.follow_id, db) for follow in follow_list]
+
+
+@router.get(
+    "/users/followers/me",
+    response_model=list[User],
+    tags=["users"],
+    name="Get followers",
 )
 async def get_followers(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    return followers.get_followers_by_user_id(current_user.id, db)
+    follower_list = follows.get_followers_by_user_id(current_user.id, db)
+    return [users.get_user(follower.user_id, db) for follower in follower_list]
 
 
 @router.get(
-    "/users/followings",
+    "/users/followers/id/{user_id}",
     response_model=list[User],
     tags=["users"],
-    name="Get Followings",
+    name="Get followers",
 )
-async def get_followings(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    followings = followings.get_followings_by_user_id(current_user.id, db)
-    # return list of users that current user is following
-    return [users.get_user(following.following_id, db) for following in followings]
-
-
-@router.get(
-    "/users/followers/{user_id}",
-    response_model=list[User],
-    tags=["users"],
-    name="Get Followers By User ID",
-)
-async def get_followers_by_user_id(
+async def get_followers(
     user_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    return followers.get_followers_by_user_id(user_id, db)
+    follower_list = follows.get_followers_by_user_id(user_id, db)
+    return [users.get_user(follower.user_id, db) for follower in follower_list]

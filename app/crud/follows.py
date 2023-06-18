@@ -1,0 +1,63 @@
+from fastapi import HTTPException
+from sqlalchemy.orm import Session
+
+from app import models
+from app.crud import users
+from app.schemas import follows
+
+
+def get_follows_by_user_id(user_id: int, db: Session):
+    return db.query(models.follows).filter(models.follows.user_id == user_id).all()
+
+
+def get_followers_by_user_id(user_id: int, db: Session):
+    return db.query(models.follows).filter(models.follows.follow_id == user_id).all()
+
+
+def create_follow(follow: follows.FollowCreate, db: Session):
+    try:
+        db_follow = models.follows(
+            user_id=follow.user_id,
+            follow_id=follow.follow_id,
+        )
+        db.add(db_follow)
+        db.commit()
+        db.refresh(db_follow)
+        return db_follow
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+def create_follow_by_username(username: str, user_id: int, db: Session):
+    try:
+        db_follow = users.get_user_by_username(username, db)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    try:
+        db_follow = models.follows(
+            user_id=user_id,
+            follow_id=db_follow.id,
+        )
+        db.add(db_follow)
+        db.commit()
+        db.refresh(db_follow)
+        return db_follow
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+def delete_follow(user_id: int, follow_id: int, db: Session):
+    try:
+        db_unfollow = (
+            db.query(models.follows)
+            .filter(
+                models.follows.follow_id == follow_id
+                and models.follows.user_id == user_id
+            )
+            .first()
+        )
+        db.delete(db_unfollow)
+        db.commit()
+        return db_unfollow
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))

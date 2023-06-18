@@ -28,5 +28,5 @@ class User(UserBase):
 
 class UserWithSocialNetwork(BaseModel):
     user: User
+    follows: int
     followers: int
-    followings: int

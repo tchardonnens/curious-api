@@ -63,19 +63,10 @@ class ResponsePrompt(Base):
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
 
 
-class Followers(Base):
-    __tablename__ = "followers"
+class follows(Base):
+    __tablename__ = "follows"
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), index=True)
-    follower_id = Column(Integer, ForeignKey("users.id"), index=True)
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
-
-
-class Followings(Base):
-    __tablename__ = "followings"
-
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), index=True)
-    following_id = Column(Integer, ForeignKey("users.id"), index=True)
+    follow_id = Column(Integer, ForeignKey("users.id"), index=True)
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
