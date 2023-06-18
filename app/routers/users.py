@@ -10,7 +10,7 @@ from app.database import SessionLocal, engine
 from sqlalchemy.orm import Session
 
 from app.schemas.auth import Token
-from app.schemas.follows import Follow, FollowCreate
+from app.schemas.follows import Follow
 from app.schemas.users import User, UserCreate, UserWithSocialNetwork
 from app.services.auth import authenticate_user, create_access_token, get_current_user
 from app.crud import follows, users
@@ -121,24 +121,6 @@ async def read_user(
 
 
 @router.post(
-    "/users/follow/{follow_id}",
-    response_model=Follow,
-    tags=["users"],
-    name="Follow User",
-)
-async def follow_user(
-    follow_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    follow = follows.create_follow(
-        FollowCreate(**{"user_id": current_user.id, "follow_id": follow_id}),
-        db,
-    )
-    return follow
-
-
-@router.post(
     "/users/follow/username/{follow_username}",
     response_model=Follow,
     tags=["users"],
@@ -149,6 +131,14 @@ async def follow_user(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    if follow_username == current_user.username:
+        raise HTTPException(status_code=400, detail="Cannot follow yourself")
+    followed_user = users.get_user_by_username(follow_username, db)
+    follow_exists = follows.get_follow_by_user_id_and_follow_id(
+        current_user.id, followed_user.id, db
+    )
+    if follow_exists != None:
+        raise HTTPException(status_code=409, detail="Follow already exists")
     follow = follows.create_follow_by_username(
         follow_username,
         current_user.id,
@@ -182,7 +172,6 @@ async def get_follows(
     current_user: User = Depends(get_current_user),
 ):
     follow_list = follows.get_follows_by_user_id(current_user.id, db)
-    # return list of users that current user is follow
     return [users.get_user(follow.follow_id, db) for follow in follow_list]
 
 
@@ -198,7 +187,6 @@ async def get_follows(
     current_user: User = Depends(get_current_user),
 ):
     follow_list = follows.get_follows_by_user_id(user_id, db)
-    # return list of users that current user is follow
     return [users.get_user(follow.follow_id, db) for follow in follow_list]
 
 

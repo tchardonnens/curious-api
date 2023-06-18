@@ -7,11 +7,34 @@ from app.schemas import follows
 
 
 def get_follows_by_user_id(user_id: int, db: Session):
-    return db.query(models.follows).filter(models.follows.user_id == user_id).all()
+    try:
+        return db.query(models.follows).filter(models.follows.user_id == user_id).all()
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 def get_followers_by_user_id(user_id: int, db: Session):
-    return db.query(models.follows).filter(models.follows.follow_id == user_id).all()
+    try:
+        return (
+            db.query(models.follows).filter(models.follows.follow_id == user_id).all()
+        )
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+def get_follow_by_user_id_and_follow_id(user_id: int, follow_id: int, db: Session):
+    try:
+        return (
+            db.query(models.follows)
+            .filter(models.follows.user_id == user_id)
+            .filter(models.follows.follow_id == follow_id)
+            .first()
+        )
+    except:
+        raise HTTPException(
+            status_code=400,
+            detail="No follow found from {} to {}".format(user_id, follow_id),
+        )
 
 
 def create_follow(follow: follows.FollowCreate, db: Session):
