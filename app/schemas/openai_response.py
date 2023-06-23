@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 
-class Prompt(BaseModel):
+class AIPrompt(BaseModel):
     prompt: str
 
 

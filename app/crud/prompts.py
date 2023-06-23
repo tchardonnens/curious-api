@@ -2,30 +2,29 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from app import models
-from app.crud import contents
 from app.crud.response_prompt import (
     get_content_ids_by_ai_response_subject,
     get_response_prompts_by_id,
     get_three_response_prompts_by_id,
 )
 from app.schemas import prompts
-from app.crud import users
+from app.crud import users, contents
 from app.schemas.contents import PromptSubjectAndContents, UserPromptSubjectAndContents
 
 
-def get_prompt_by_id(prompt_id: int, db: Session):
+def get_prompt_by_id(prompt_id: int, db: Session) -> models.Prompt:
     return db.query(models.Prompt).filter(models.Prompt.id == prompt_id).first()
 
 
-def get_prompt_by_title(title: str, db: Session):
+def get_prompt_by_title(title: str, db: Session) -> models.Prompt:
     return db.query(models.Prompt).filter(models.Prompt.title == title).first()
 
 
-def get_prompts_by_user_id(user_id: int, db: Session):
+def get_prompts_by_user_id(user_id: int, db: Session) -> list[models.Prompt]:
     return db.query(models.Prompt).filter(models.Prompt.user_id == user_id).all()
 
 
-def get_last_three_prompts_by_user_id(user_id: int, db: Session):
+def get_last_three_prompts_by_user_id(user_id: int, db: Session) -> list[models.Prompt]:
     return (
         db.query(models.Prompt)
         .filter(models.Prompt.user_id == user_id)
@@ -34,11 +33,11 @@ def get_last_three_prompts_by_user_id(user_id: int, db: Session):
     )
 
 
-def get_prompts(db: Session, skip: int = 0, limit: int = 100):
+def get_prompts(db: Session, skip: int = 0, limit: int = 100) -> list[models.Prompt]:
     return db.query(models.Prompt).offset(skip).limit(limit).all()
 
 
-def create_prompt(prompt: prompts.PromptCreate, db: Session):
+def create_prompt(prompt: prompts.PromptCreate, db: Session) -> models.Prompt:
     db_prompt = get_prompt_by_title(title=prompt.title, db=db)
     if db_prompt:
         raise HTTPException(status_code=400, detail="Prompt already exists.")
@@ -46,7 +45,12 @@ def create_prompt(prompt: prompts.PromptCreate, db: Session):
     if db_user is None:
         raise HTTPException(status_code=400, detail="Invalid user ID.")
     try:
-        db_prompt = models.Prompt(title=prompt.title, user_id=prompt.user_id)
+        db_prompt = models.Prompt(
+            title=prompt.title,
+            keywords=prompt.keywords,
+            is_private=prompt.is_private,
+            user_id=prompt.user_id,
+        )
         db.add(db_prompt)
         db.commit()
         db.refresh(db_prompt)
@@ -55,12 +59,12 @@ def create_prompt(prompt: prompts.PromptCreate, db: Session):
         raise HTTPException(status_code=400, detail=str(e))
 
 
-def update_prompt_visibility(prompt_id: int, is_private: bool, db: Session):
+def switch_prompt_visibility(prompt_id: int, db: Session) -> models.Prompt:
     db_prompt = get_prompt_by_id(prompt_id, db)
     if db_prompt is None:
         raise HTTPException(status_code=400, detail="Prompt not found.")
     try:
-        db_prompt.is_private = is_private
+        db_prompt.is_private = not db_prompt.is_private
         db.commit()
         db.refresh(db_prompt)
         return db_prompt

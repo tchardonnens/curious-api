@@ -16,11 +16,10 @@ logging.basicConfig(
 app = FastAPI(
     title="Curious API",
     description="API for the Curious app",
-    version="0.3.0",
+    version="0.6.0",
 )
 
 origins = [
-    "http://localhost:3000",
     "https://verycurious.xyz",
 ]
 

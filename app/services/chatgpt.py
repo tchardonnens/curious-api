@@ -45,7 +45,6 @@ def gpt_json_response(prompt: str) -> dict:
     )
     chain = LLMChain(llm=llm, prompt=crafted_prompt)
     ai_response = chain.run({"json_format": json_template, "subject": prompt})
-    print(ai_response)
     parser = PydanticOutputParser(pydantic_object=AIResponse)
 
     try:
