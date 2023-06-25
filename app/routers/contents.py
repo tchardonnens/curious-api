@@ -3,16 +3,16 @@ import logging
 import os
 import redis
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from fastapi import Depends
 
 from app import models
 from app.crud import prompts
 from app.database import SessionLocal, engine
 from sqlalchemy.orm import Session
-from app.schemas.openai_response import AIResponse, Prompt, Subject
+from app.schemas.openai_response import AIResponse, AIPrompt, Subject
 from app.schemas.contents import PromptSubjectAndContents
-from app.schemas.prompts import PromptCreate
+from app.schemas.prompts import PromptCreate, Prompt
 from app.schemas.users import User
 from app.services.auth import get_current_user
 from app.services.chatgpt import gpt_json_response
@@ -48,7 +48,7 @@ async def startup_event():
     response_description="ChatGPT response",
     tags=["contents"],
 )
-async def chat(request: Prompt, current_user: User = Depends(get_current_user)):
+async def chat(request: AIPrompt, current_user: User = Depends(get_current_user)):
     if cache.get(request.prompt):
         logging.info("Cache hit")
         response: str = cache.get(request.prompt)
@@ -65,8 +65,7 @@ async def chat(request: Prompt, current_user: User = Depends(get_current_user)):
         or ai_response.deeper_subjects[0].detailed_name
         or ai_response.main_subject_of_the_prompt
     ) == "string":
-        # change http status code to 404
-        return {"detail": "No subject found, LLM failed"}
+        raise HTTPException(status_code=404, detail="Subject not found")
     else:
         return ai_response.json()
 
@@ -78,7 +77,8 @@ async def chat(request: Prompt, current_user: User = Depends(get_current_user)):
     tags=["contents"],
 )
 async def curious(
-    request: Prompt,
+    request: AIPrompt,
+    is_private: bool,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -96,7 +96,7 @@ async def curious(
     all_prompt_subjects_and_contents: list[PromptSubjectAndContents] = []
 
     async def process_subjects(
-        prompt: Prompt,
+        prompt: AIPrompt,
         subjects: list[Subject],
         all_prompt_subjects_and_contents: list[PromptSubjectAndContents],
     ):
@@ -112,6 +112,7 @@ async def curious(
             PromptCreate(
                 title=str(request.prompt),
                 keywords=ai_response.main_subject_of_the_prompt,
+                is_private=is_private,
                 user_id=current_user.id,
             )
         ),
@@ -125,7 +126,9 @@ async def curious(
             all_prompt_subjects_and_contents,
         )
     else:
-        raise Exception("No basic subjects found, LLM failed")
+        raise HTTPException(
+            status_code=404, detail="No basic subjects found, LLM failed"
+        )
     if ai_response.deeper_subjects != "string":
         all_prompt_subjects_and_contents = await process_subjects(
             created_prompt,
@@ -133,7 +136,9 @@ async def curious(
             all_prompt_subjects_and_contents,
         )
     else:
-        raise Exception("No deeper subjects found, LLM failed")
+        raise HTTPException(
+            status_code=404, detail="No deeper subjects found, LLM failed"
+        )
     return all_prompt_subjects_and_contents
 
 

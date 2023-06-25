@@ -6,6 +6,7 @@ class PromptBase(BaseModel):
     title: str
     keywords: str
     user_id: int
+    is_private: bool
 
 
 class PromptCreate(PromptBase):

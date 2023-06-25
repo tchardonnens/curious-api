@@ -3,20 +3,43 @@ from sqlalchemy.orm import Session
 
 from app import models
 from app.crud import users
-from app.schemas import follows
+from app.schemas.follows import FollowCreate
 
 
 def get_follows_by_user_id(user_id: int, db: Session):
-    return db.query(models.follows).filter(models.follows.user_id == user_id).all()
+    try:
+        return db.query(models.Follows).filter(models.Follows.user_id == user_id).all()
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 def get_followers_by_user_id(user_id: int, db: Session):
-    return db.query(models.follows).filter(models.follows.follow_id == user_id).all()
-
-
-def create_follow(follow: follows.FollowCreate, db: Session):
     try:
-        db_follow = models.follows(
+        return (
+            db.query(models.Follows).filter(models.Follows.follow_id == user_id).all()
+        )
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+def get_follow_by_user_id_and_follow_id(user_id: int, follow_id: int, db: Session):
+    try:
+        return (
+            db.query(models.Follows)
+            .filter(models.Follows.user_id == user_id)
+            .filter(models.Follows.follow_id == follow_id)
+            .first()
+        )
+    except:
+        raise HTTPException(
+            status_code=400,
+            detail="No follow found from {} to {}".format(user_id, follow_id),
+        )
+
+
+def create_follow(follow: FollowCreate, db: Session):
+    try:
+        db_follow = models.Follows(
             user_id=follow.user_id,
             follow_id=follow.follow_id,
         )
@@ -34,7 +57,7 @@ def create_follow_by_username(username: str, user_id: int, db: Session):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
     try:
-        db_follow = models.follows(
+        db_follow = models.Follows(
             user_id=user_id,
             follow_id=db_follow.id,
         )
@@ -49,10 +72,10 @@ def create_follow_by_username(username: str, user_id: int, db: Session):
 def delete_follow(user_id: int, follow_id: int, db: Session):
     try:
         db_unfollow = (
-            db.query(models.follows)
+            db.query(models.Follows)
             .filter(
-                models.follows.follow_id == follow_id
-                and models.follows.user_id == user_id
+                models.Follows.follow_id == follow_id
+                and models.Follows.user_id == user_id
             )
             .first()
         )

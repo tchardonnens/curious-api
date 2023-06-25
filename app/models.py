@@ -50,6 +50,7 @@ class Prompt(Base):
     keywords = Column(String, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), index=True)
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    is_private = Column(Boolean, default=False)
     responses = relationship("ResponsePrompt", backref="prompt")
 
 
@@ -63,7 +64,7 @@ class ResponsePrompt(Base):
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
 
 
-class follows(Base):
+class Follows(Base):
     __tablename__ = "follows"
 
     id = Column(Integer, primary_key=True, index=True)

@@ -11,15 +11,31 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 def get_user(user_id: int, db: Session):
-    return db.query(models.User).filter(models.User.id == user_id).first()
+    res = db.query(models.User).filter(models.User.id == user_id).first()
+    if res is None:
+        raise HTTPException(
+            status_code=404, detail="User not found for id {}".format(user_id)
+        )
+    return res
 
 
 def get_user_by_email(email: str, db: Session):
-    return db.query(models.User).filter(models.User.email == email).first()
+    res = db.query(models.User).filter(models.User.email == email).first()
+    if res is None:
+        raise HTTPException(
+            status_code=404, detail="User not found for email {}".format(email)
+        )
+    return res
 
 
 def get_user_by_username(username: str, db: Session):
-    return db.query(models.User).filter(models.User.username == username).first()
+    res = db.query(models.User).filter(models.User.username == username).first()
+    if res is None:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found for username {}".format(username),
+        )
+    return res
 
 
 def get_users(db: Session, skip: int = 0, limit: int = 100):
