@@ -78,7 +78,6 @@ async def chat(request: AIPrompt, current_user: User = Depends(get_current_user)
 )
 async def curious(
     request: AIPrompt,
-    is_private: bool,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -114,7 +113,7 @@ async def curious(
             PromptCreate(
                 title=str(request.prompt),
                 keywords=ai_response.main_subject_of_the_prompt,
-                is_private=is_private,
+                is_private=request.is_private,
                 user_id=current_user.id,
             )
         ),

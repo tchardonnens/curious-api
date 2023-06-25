@@ -96,6 +96,7 @@ def get_prompt_contents(prompt_id: int, db: Session) -> UserPromptSubjectAndCont
         user=db_user,
         prompt=db_prompt,
         subject=db_response_prompt.ai_response_subject,
+        description=db_response_prompt.ai_response_description,
         contents=db_contents,
     )
 
@@ -109,15 +110,18 @@ def get_prompt_contents_history(
     db_response_prompts = get_response_prompts_by_id(prompt_id, db)
     if db_response_prompts is None:
         raise HTTPException(status_code=400, detail="No response prompts found.")
-
     subject_contents_map = {}
+    description_contents_map = {}
 
     processed_content_ids = set()
 
     for db_response_prompt in db_response_prompts:
         subject = db_response_prompt.ai_response_subject
+        description = db_response_prompt.ai_response_description
+
         if subject not in subject_contents_map:
             subject_contents_map[subject] = []
+            description_contents_map[subject] = description
 
         db_content_ids = get_content_ids_by_ai_response_subject(subject, db)
 
@@ -130,8 +134,13 @@ def get_prompt_contents_history(
             processed_content_ids.add(content_id)
 
     result = [
-        PromptSubjectAndContents(prompt=db_prompt, subject=subject, contents=contents)
-        for subject, contents in subject_contents_map.items()
+        PromptSubjectAndContents(
+            prompt=db_prompt,
+            subject=subject,
+            description=description_contents_map[subject],
+            contents=subject_contents_map[subject],
+        )
+        for subject in subject_contents_map.keys()
     ]
 
     return result

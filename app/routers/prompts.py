@@ -56,13 +56,15 @@ async def get_prompts(
     db: Session = Depends(get_db), current_user: User = Depends(get_current_user)
 ):
     list_of_prompts = prompts.get_last_three_prompts_by_user_id(current_user.id, db)
-    logging.info(list_of_prompts[0].title)
-    list_of_contents = []
-    for prompt in list_of_prompts:
-        content_for_prompt = prompts.get_prompt_contents(prompt.id, db)
-        logging.info(content_for_prompt.subject)
-        list_of_contents.append(content_for_prompt)
-    return list_of_contents
+    if len(list_of_prompts) == 0:
+        return []
+    else:
+        list_of_contents = []
+        for prompt in list_of_prompts:
+            content_for_prompt = prompts.get_prompt_contents(prompt.id, db)
+            logging.info(content_for_prompt.subject)
+            list_of_contents.append(content_for_prompt)
+        return list_of_contents
 
 
 @router.get("/prompts/{prompt_id}", response_model=Prompt, tags=["prompts"])

@@ -3,6 +3,7 @@ from pydantic import BaseModel
 
 class AIPrompt(BaseModel):
     prompt: str
+    is_private: bool
 
 
 class Subject(BaseModel):
