@@ -30,7 +30,7 @@ Generate a realistic advice in the following JSON format:
                 "detailed_name": "",
                 "description": ""
             }
-        ], 
+        ],
         "deeper_subjects": [
             {
                 "detailed_name": "",
