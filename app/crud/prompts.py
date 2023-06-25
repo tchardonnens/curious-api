@@ -24,13 +24,19 @@ def get_prompts_by_user_id(user_id: int, db: Session) -> list[models.Prompt]:
     return db.query(models.Prompt).filter(models.Prompt.user_id == user_id).all()
 
 
-def get_last_three_prompts_by_user_id(user_id: int, db: Session) -> list[models.Prompt]:
+def get_last_three_public_prompts_by_user_id(
+    user_id: int, db: Session
+) -> list[models.Prompt]:
     return (
         db.query(models.Prompt)
         .filter(models.Prompt.user_id == user_id)
         .filter(models.Prompt.is_private == False)
         .all()[-3:]
     )
+
+
+def get_last_three_prompts_by_user_id(user_id: int, db: Session) -> list[models.Prompt]:
+    return db.query(models.Prompt).filter(models.Prompt.user_id == user_id).all()[-3:]
 
 
 def get_prompts(db: Session, skip: int = 0, limit: int = 100) -> list[models.Prompt]:

@@ -134,7 +134,7 @@ async def get_feed(
     list_of_follows = follows.get_follows_by_user_id(current_user.id, db)
     feed = []
     for follow in list_of_follows:
-        list_of_prompts = prompts.get_last_three_prompts_by_user_id(
+        list_of_prompts = prompts.get_last_three_public_prompts_by_user_id(
             follow.follow_id, db
         )
         for prompt in list_of_prompts:
