@@ -6,6 +6,7 @@ class ResponsePromptBase(BaseModel):
     prompt_id: int
     content_id: int
     ai_response_subject: str
+    ai_response_description: str
 
 
 class ResponsePromptCreate(ResponsePromptBase):
