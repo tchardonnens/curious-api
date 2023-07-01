@@ -9,8 +9,8 @@ def get_content(content_id: int, db: Session):
     return db.query(models.Content).filter(models.Content.id == content_id).first()
 
 
-def get_content_by_url(url: str, db: Session):
-    return db.query(models.Content).filter(models.Content.url == url).first()
+def get_content_by_link(link: str, db: Session):
+    return db.query(models.Content).filter(models.Content.link == link).first()
 
 
 def get_content_by_title(title: str, db: Session):

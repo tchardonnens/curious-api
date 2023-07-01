@@ -8,13 +8,12 @@ class ContentBase(BaseModel):
     title: str
     snippet: str
     link: str
-    source: str
     long_description: str
     image: str
 
 
 class ContentCreate(ContentBase):
-    pass
+    source: str
 
 
 class Content(ContentBase):

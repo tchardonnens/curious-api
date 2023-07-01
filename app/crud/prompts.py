@@ -1,5 +1,7 @@
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy import desc
+from sqlalchemy.exc import SQLAlchemyError
 
 from app import models
 from app.crud.response_prompt import (
@@ -8,12 +10,14 @@ from app.crud.response_prompt import (
     get_three_response_prompts_by_id,
 )
 from app.schemas import prompts
-from app.crud import users, contents
 from app.schemas.contents import PromptSubjectAndContents, UserPromptSubjectAndContents
 
 
 def get_prompt_by_id(prompt_id: int, db: Session) -> models.Prompt:
-    return db.query(models.Prompt).filter(models.Prompt.id == prompt_id).first()
+    prompts = db.query(models.Prompt).filter(models.Prompt.id == prompt_id).first()
+    if not prompts:
+        raise HTTPException(status_code=404, detail="Prompt not found")
+    return prompts
 
 
 def get_prompt_by_title(title: str, db: Session) -> models.Prompt:
@@ -21,33 +25,62 @@ def get_prompt_by_title(title: str, db: Session) -> models.Prompt:
 
 
 def get_prompts_by_user_id(user_id: int, db: Session) -> list[models.Prompt]:
-    return db.query(models.Prompt).filter(models.Prompt.user_id == user_id).all()
+    prompts = db.query(models.Prompt).filter(models.Prompt.user_id == user_id).all()
+    if not prompts:
+        raise HTTPException(status_code=404, detail="Prompt not found")
+    return prompts
 
 
 def get_last_three_public_prompts_by_user_id(
     user_id: int, db: Session
 ) -> list[models.Prompt]:
-    return (
+    prompts = (
         db.query(models.Prompt)
         .filter(models.Prompt.user_id == user_id)
         .filter(models.Prompt.is_private == False)
-        .all()[-3:]
+        .order_by(desc(models.Prompt.id))
+        .limit(3)
+        .all()
     )
+    if not prompts:
+        raise HTTPException(status_code=404, detail="Prompt not found")
+    return prompts
 
 
 def get_last_three_prompts_by_user_id(user_id: int, db: Session) -> list[models.Prompt]:
-    return db.query(models.Prompt).filter(models.Prompt.user_id == user_id).all()[-3:]
+    prompts = (
+        db.query(models.Prompt)
+        .filter(models.Prompt.user_id == user_id)
+        .order_by(desc(models.Prompt.id))
+        .limit(3)
+        .all()
+    )
+    if not prompts:
+        raise HTTPException(status_code=404, detail="Prompt not found")
+    return prompts
 
 
 def get_prompts(db: Session, skip: int = 0, limit: int = 100) -> list[models.Prompt]:
-    return db.query(models.Prompt).offset(skip).limit(limit).all()
+    prompts = db.query(models.Prompt).offset(skip).limit(limit).all()
+    if not prompts:
+        raise HTTPException(status_code=404, detail="Prompt not found")
+    return prompts
+
+
+def get_user_by_id(user_id: int, db: Session):
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+
+    if user is None:
+        raise HTTPException(status_code=404, detail=f"User not found for id {user_id}")
+
+    return user
 
 
 def create_prompt(prompt: prompts.PromptCreate, db: Session) -> models.Prompt:
     db_prompt = get_prompt_by_title(title=prompt.title, db=db)
     if db_prompt:
         raise HTTPException(status_code=400, detail="Prompt already exists.")
-    db_user = users.get_user(prompt.user_id, db)
+    db_user = get_user_by_id(prompt.user_id, db)
     if db_user is None:
         raise HTTPException(status_code=400, detail="Invalid user ID.")
     try:
@@ -61,8 +94,8 @@ def create_prompt(prompt: prompts.PromptCreate, db: Session) -> models.Prompt:
         db.commit()
         db.refresh(db_prompt)
         return db_prompt
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=400, detail="Failed to create prompt")
 
 
 def switch_prompt_visibility(prompt_id: int, db: Session) -> models.Prompt:
@@ -78,11 +111,15 @@ def switch_prompt_visibility(prompt_id: int, db: Session) -> models.Prompt:
         raise HTTPException(status_code=400, detail=str(e))
 
 
+def get_content_by_id(content_id: int, db: Session):
+    return db.query(models.Content).filter(models.Content.id == content_id).first()
+
+
 def get_prompt_contents(prompt_id: int, db: Session) -> UserPromptSubjectAndContents:
     db_prompt = get_prompt_by_id(prompt_id, db)
     if db_prompt is None:
         raise HTTPException(status_code=400, detail="Prompt not found.")
-    db_user = users.get_user(db_prompt.user_id, db)
+    db_user = get_user_by_id(db_prompt.user_id, db)
     if db_user is None:
         raise HTTPException(status_code=400, detail="User not found.")
     db_response_prompts = get_three_response_prompts_by_id(prompt_id, db)
@@ -90,7 +127,7 @@ def get_prompt_contents(prompt_id: int, db: Session) -> UserPromptSubjectAndCont
         raise HTTPException(status_code=400, detail="No response prompts found.")
     db_contents = []
     for db_response_prompt in db_response_prompts:
-        db_contents.append(contents.get_content(db_response_prompt.content_id, db))
+        db_contents.append(get_content_by_id(db_response_prompt.content_id, db))
 
     return UserPromptSubjectAndContents(
         user=db_user,
@@ -125,7 +162,7 @@ def get_prompt_contents_history(
             content_id = content_id_tuple[0]
             if content_id in processed_content_ids:
                 continue
-            content = contents.get_content(content_id, db)
+            content = get_content_by_id(content_id, db)
             subject_contents_map[subject].append(content)
             processed_content_ids.add(content_id)
 
