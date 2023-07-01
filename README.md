@@ -55,6 +55,3 @@ To run the python server
 To stop it
 
 `CTRL+C`
-
-
-

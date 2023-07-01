@@ -18,6 +18,7 @@ passlib = {extras = ["bcrypt"], version = "*"}
 psycopg2 = "*"
 fastapi-analytics = "*"
 openai = "*"
+httpx = "*"
 
 [dev-packages]
 
