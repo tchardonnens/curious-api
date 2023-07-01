@@ -7,7 +7,7 @@ from langchain.output_parsers import PydanticOutputParser
 
 from app.schemas.openai_response import (
     json_template,
-    AIResponse,
+    LLMResponse,
 )
 
 llm = OpenAI(temperature=0.4)
@@ -45,11 +45,11 @@ def gpt_json_response(prompt: str) -> dict:
     )
     chain = LLMChain(llm=llm, prompt=crafted_prompt)
     ai_response = chain.run({"json_format": json_template, "subject": prompt})
-    parser = PydanticOutputParser(pydantic_object=AIResponse)
+    parser = PydanticOutputParser(pydantic_object=LLMResponse)
 
     try:
         print("Trying to parse...")
-        res: AIResponse = parser.parse(ai_response)
+        res: LLMResponse = parser.parse(ai_response)
     except Exception as e:
         print("Error in JSON... Fixing...")
         new_parser = OutputFixingParser.from_llm(parser=parser, llm=ChatOpenAI())

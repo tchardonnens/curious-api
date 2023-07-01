@@ -32,12 +32,14 @@ class AllSourcesContent(BaseModel):
 
 class SubjectAndContents(BaseModel):
     subject: Prompt
+    description: str
     content: AllSourcesContent
 
 
 class PromptSubjectAndContents(BaseModel):
     prompt: Prompt
     subject: str
+    description: str
     contents: list[Content]
 
 
@@ -45,4 +47,5 @@ class UserPromptSubjectAndContents(BaseModel):
     user: User
     prompt: Prompt
     subject: str
+    description: str
     contents: list[Content]

@@ -40,6 +40,7 @@ def create_response_prompt(response_prompt: ResponsePromptCreate, db: Session):
             prompt_id=response_prompt.prompt_id,
             content_id=response_prompt.content_id,
             ai_response_subject=response_prompt.ai_response_subject,
+            ai_response_description=response_prompt.ai_response_description,
         )
         db.add(db_response_prompt)
         db.commit()

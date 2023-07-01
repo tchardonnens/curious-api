@@ -10,13 +10,13 @@ from app import models
 from app.crud import prompts
 from app.database import SessionLocal, engine
 from sqlalchemy.orm import Session
-from app.schemas.openai_response import AIResponse, AIPrompt, Subject
+from app.schemas.openai_response import LLMResponse, Subject, CuriousInput
 from app.schemas.contents import PromptSubjectAndContents
-from app.schemas.prompts import PromptCreate, Prompt
+from app.schemas.prompts import PromptCreate
 from app.schemas.users import User
 from app.services.auth import get_current_user
 from app.services.chatgpt import gpt_json_response
-from app.services.search import AIResponseSubjectSearchEngines
+from app.services.search import LLMResponseSubjectSearchEngines
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -48,17 +48,17 @@ async def startup_event():
     response_description="ChatGPT response",
     tags=["contents"],
 )
-async def chat(request: AIPrompt, current_user: User = Depends(get_current_user)):
+async def chat(request: CuriousInput, current_user: User = Depends(get_current_user)):
     if cache.get(request.prompt):
         logging.info("Cache hit")
-        response: str = cache.get(request.prompt)
+        response: str = cache.get(request)
         json_dict = json.loads(response)
-        ai_response = AIResponse.parse_obj(json_dict)
+        ai_response = LLMResponse.parse_obj(json_dict)
     else:
         logging.info("Cache miss")
-        ai_response: AIResponse = gpt_json_response(request.prompt)
+        ai_response: LLMResponse = gpt_json_response(request)
         json_string = ai_response.json()
-        cache.set(request.prompt, str(json_string))
+        cache.set(request, str(json_string))
 
     if (
         ai_response.basic_subjects[0].detailed_name
@@ -77,48 +77,46 @@ async def chat(request: AIPrompt, current_user: User = Depends(get_current_user)
     tags=["contents"],
 )
 async def curious(
-    request: AIPrompt,
-    is_private: bool,
+    request: CuriousInput,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    if cache.get(request.prompt):
+    cached_response = cache.get(request.prompt)
+
+    if cached_response:
         logging.info("Cache hit")
-        response: str = cache.get(request.prompt)
-        json_dict = json.loads(response)
-        ai_response = AIResponse.parse_obj(json_dict)
+        json_dict = json.loads(cached_response)
+        ai_response = LLMResponse.parse_obj(json_dict)
     else:
         logging.info("Cache miss")
-        ai_response: AIResponse = gpt_json_response(request.prompt)
+        ai_response = gpt_json_response(request.prompt)
         json_string = ai_response.json()
-        cache.set(request.prompt, str(json_string))
+        cache.set(request.prompt, json_string)
 
-    all_prompt_subjects_and_contents: list[PromptSubjectAndContents] = []
+    all_prompt_subjects_and_contents = []
 
     async def process_subjects(
-        prompt: AIPrompt,
+        prompt: str,
         subjects: list[Subject],
         all_prompt_subjects_and_contents: list[PromptSubjectAndContents],
     ):
         for subject in subjects:
-            prompt_subject_and_contents: PromptSubjectAndContents = (
-                await AIResponseSubjectSearchEngines(prompt, subject.detailed_name, db)
+            prompt_subject_and_contents = await LLMResponseSubjectSearchEngines(
+                prompt, subject.detailed_name, subject.description, db
             )
             all_prompt_subjects_and_contents.append(prompt_subject_and_contents)
         return all_prompt_subjects_and_contents
 
-    created_prompt: Prompt = prompts.create_prompt(
-        (
-            PromptCreate(
-                title=str(request.prompt),
-                keywords=ai_response.main_subject_of_the_prompt,
-                is_private=is_private,
-                user_id=current_user.id,
-            )
+    created_prompt = prompts.create_prompt(
+        PromptCreate(
+            title=request.prompt,
+            keywords=ai_response.main_subject_of_the_prompt,
+            is_private=request.is_private,
+            user_id=current_user.id,
         ),
         db,
     )
-    all_prompt_subjects_and_contents = []
+
     if ai_response.basic_subjects != "string":
         all_prompt_subjects_and_contents = await process_subjects(
             created_prompt,
@@ -129,6 +127,7 @@ async def curious(
         raise HTTPException(
             status_code=404, detail="No basic subjects found, LLM failed"
         )
+
     if ai_response.deeper_subjects != "string":
         all_prompt_subjects_and_contents = await process_subjects(
             created_prompt,
@@ -139,6 +138,7 @@ async def curious(
         raise HTTPException(
             status_code=404, detail="No deeper subjects found, LLM failed"
         )
+
     return all_prompt_subjects_and_contents
 
 

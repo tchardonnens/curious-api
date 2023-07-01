@@ -70,6 +70,7 @@ async def __search__(query: str, search_engine_id: str):
 async def save_search_and_results(
     created_prompt: Prompt,
     ai_response_subject: str,
+    ai_response_description: str,
     youtube_results: list[Content],
     reddit_results: list[Content],
     twitter_results: list[Content],
@@ -87,6 +88,7 @@ async def save_search_and_results(
                     prompt_id=created_prompt_id,
                     content_id=created_content.id,
                     ai_response_subject=ai_response_subject,
+                    ai_response_description=ai_response_description,
                 ),
                 db,
             )
@@ -103,12 +105,15 @@ async def save_search_and_results(
     all_sources_content = youtube_results + reddit_results + twitter_results
 
     return PromptSubjectAndContents(
-        prompt=created_prompt, subject=ai_response_subject, contents=all_sources_content
+        prompt=created_prompt,
+        subject=ai_response_subject,
+        description=ai_response_description,
+        contents=all_sources_content,
     )
 
 
-async def AIResponseSubjectSearchEngines(
-    prompt: Prompt, ai_response_subject: str, db: Session
+async def LLMResponseSubjectSearchEngines(
+    prompt: Prompt, ai_response_subject: str, ai_response_description: str, db: Session
 ) -> PromptSubjectAndContents:
     query = f"{prompt.keywords} {ai_response_subject}"
     youtube_results, reddit_results, twitter_results = await asyncio.gather(
@@ -119,6 +124,7 @@ async def AIResponseSubjectSearchEngines(
     stored_data = await save_search_and_results(
         prompt,
         ai_response_subject,
+        ai_response_description,
         youtube_results,
         reddit_results,
         twitter_results,
