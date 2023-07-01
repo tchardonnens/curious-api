@@ -1,4 +1,3 @@
-import logging
 import os
 import redis
 from requests import Session
@@ -62,7 +61,6 @@ async def get_prompts(
         list_of_contents = []
         for prompt in list_of_prompts:
             content_for_prompt = prompts.get_prompt_contents(prompt.id, db)
-            logging.info(content_for_prompt.subject)
             list_of_contents.append(content_for_prompt)
         return list_of_contents
 

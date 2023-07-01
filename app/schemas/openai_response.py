@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 
-class AIPrompt(BaseModel):
+class CuriousInput(BaseModel):
     prompt: str
     is_private: bool
 
@@ -11,7 +11,7 @@ class Subject(BaseModel):
     description: str
 
 
-class AIResponse(BaseModel):
+class LLMResponse(BaseModel):
     main_subject_of_the_prompt: str
     basic_subjects: list[Subject]
     deeper_subjects: list[Subject]

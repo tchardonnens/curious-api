@@ -112,7 +112,7 @@ async def save_search_and_results(
     )
 
 
-async def AIResponseSubjectSearchEngines(
+async def LLMResponseSubjectSearchEngines(
     prompt: Prompt, ai_response_subject: str, ai_response_description: str, db: Session
 ) -> PromptSubjectAndContents:
     query = f"{prompt.keywords} {ai_response_subject}"

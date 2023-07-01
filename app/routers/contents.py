@@ -1,7 +1,6 @@
 import json
 import logging
 import os
-from pydantic import BaseModel
 import redis
 
 from fastapi import APIRouter, HTTPException
@@ -11,13 +10,13 @@ from app import models
 from app.crud import prompts
 from app.database import SessionLocal, engine
 from sqlalchemy.orm import Session
-from app.schemas.openai_response import AIResponse, AIPrompt, Subject
+from app.schemas.openai_response import LLMResponse, Subject, CuriousInput
 from app.schemas.contents import PromptSubjectAndContents
-from app.schemas.prompts import PromptCreate, Prompt
+from app.schemas.prompts import PromptCreate
 from app.schemas.users import User
 from app.services.auth import get_current_user
 from app.services.chatgpt import gpt_json_response
-from app.services.search import AIResponseSubjectSearchEngines
+from app.services.search import LLMResponseSubjectSearchEngines
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -44,11 +43,6 @@ async def startup_event():
     cache = redis.Redis(connection_pool=pool)
 
 
-class CuriousInput(BaseModel):
-    prompt: str
-    is_private: bool
-
-
 @router.post(
     "/chat",
     response_description="ChatGPT response",
@@ -59,10 +53,10 @@ async def chat(request: CuriousInput, current_user: User = Depends(get_current_u
         logging.info("Cache hit")
         response: str = cache.get(request)
         json_dict = json.loads(response)
-        ai_response = AIResponse.parse_obj(json_dict)
+        ai_response = LLMResponse.parse_obj(json_dict)
     else:
         logging.info("Cache miss")
-        ai_response: AIResponse = gpt_json_response(request)
+        ai_response: LLMResponse = gpt_json_response(request)
         json_string = ai_response.json()
         cache.set(request, str(json_string))
 
@@ -92,7 +86,7 @@ async def curious(
     if cached_response:
         logging.info("Cache hit")
         json_dict = json.loads(cached_response)
-        ai_response = AIResponse.parse_obj(json_dict)
+        ai_response = LLMResponse.parse_obj(json_dict)
     else:
         logging.info("Cache miss")
         ai_response = gpt_json_response(request.prompt)
@@ -107,8 +101,8 @@ async def curious(
         all_prompt_subjects_and_contents: list[PromptSubjectAndContents],
     ):
         for subject in subjects:
-            prompt_subject_and_contents = await AIResponseSubjectSearchEngines(
-                prompt, subject.detailed_name, db
+            prompt_subject_and_contents = await LLMResponseSubjectSearchEngines(
+                prompt, subject.detailed_name, subject.description, db
             )
             all_prompt_subjects_and_contents.append(prompt_subject_and_contents)
         return all_prompt_subjects_and_contents
