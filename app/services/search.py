@@ -1,43 +1,41 @@
 import os
 import asyncio
 import httpx
+import logging
 from app.crud import contents, response_prompt
-from app.schemas.prompts import Prompt
+from app import models
 from app.schemas.response_prompt import ResponsePromptCreate
-from sqlalchemy.orm import Session
+from app.schemas.contents import ContentBase, SubjectResources
 
-from app.schemas.contents import (
-    Content,
-    ContentBase,
-    PromptSubjectAndContents,
-)
-
-SEARCH_API_KEY = os.getenv("SEARCH_API_KEY")
-YOUTUBE_SEARCH_ENGINE_ID = os.getenv("YOUTUBE_SEARCH_ENGINE_ID")
-REDDIT_SEARCH_ENGINE_ID = os.getenv("REDDIT_SEARCH_ENGINE_ID")
-TWITTER_SEARCH_ENGINE_ID = os.getenv("TWITTER_SEARCH_ENGINE_ID")
-
+# Configuration
+SEARCH_API_KEY = os.environ["SEARCH_API_KEY"]
+SEARCH_ENGINE_IDS = {
+    "youtube": os.environ["YOUTUBE_SEARCH_ENGINE_ID"],
+    "reddit": os.environ["REDDIT_SEARCH_ENGINE_ID"],
+    "twitter": os.environ["TWITTER_SEARCH_ENGINE_ID"],
+}
 BASE_URL = "https://www.googleapis.com/customsearch/v1"
 
+# Logger configuration
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-async def __parse_results__(search_items, source) -> list[ContentBase]:
+
+async def parse_search_results(search_items, source):
+    """
+    Cleans up search results received from Google Custom Search.
+    """
     cleaned_results = []
     for search_item in search_items:
         try:
-            long_description = search_item["pagemap"]["metatags"][0].get(
-                "og:description", "N/A"
-            )
-            image = search_item["pagemap"]["metatags"][0].get("og:image", "N/A")
-            title = search_item.get("title", "N/A")
-            snippet = search_item.get("snippet", "N/A")
-            link = search_item.get("link", "N/A")
+            metatags = search_item["pagemap"]["metatags"][0]
             cleaned_results.append(
                 ContentBase(
-                    title=title,
-                    snippet=snippet,
-                    link=link,
-                    long_description=long_description,
-                    image=image,
+                    title=search_item.get("title", "N/A"),
+                    snippet=search_item.get("snippet", "N/A"),
+                    link=search_item.get("link", "N/A"),
+                    long_description=metatags.get("og:description", "N/A"),
+                    image=metatags.get("og:image", "N/A"),
                     source=source,
                 )
             )
@@ -46,7 +44,10 @@ async def __parse_results__(search_items, source) -> list[ContentBase]:
     return cleaned_results
 
 
-async def __search__(query: str, search_engine_id: str):
+async def search(query, search_engine_id):
+    """
+    Performs a search using Google Custom Search Engine.
+    """
     async with httpx.AsyncClient() as client:
         params = {
             "key": SEARCH_API_KEY,
@@ -60,74 +61,78 @@ async def __search__(query: str, search_engine_id: str):
             resp.raise_for_status()
             return resp.json().get("items", [])
         except httpx.HTTPStatusError as exc:
-            print(f"An HTTP error occurred: {exc}")
+            logger.error(f"An HTTP error occurred: {exc}")
             return []
         except Exception as exc:
-            print(f"An error occurred: {exc}")
+            logger.error(f"An error occurred: {exc}")
             return []
 
 
-async def save_search_and_results(
-    created_prompt: Prompt,
+async def store_results(
+    prompt: models.Prompt,
     ai_response_subject: str,
     ai_response_description: str,
-    youtube_results: list[Content],
-    reddit_results: list[Content],
-    twitter_results: list[Content],
-    db: Session,
-) -> PromptSubjectAndContents:
-    async def save_results(
-        results: list[ContentBase], source: str, created_prompt_id: int, db: Session
-    ):
-        list_of_contents: list[Content] = []
+    search_results,
+    db,
+):
+    """
+    Stores the search results in the database.
+    """
+
+    async def save_results_to_db(results, source, prompt_id, db):
+        contents_list = []
         for result in results:
-            created_content: Content = contents.create_content(result, source, db)
-            list_of_contents.append(created_content)
+            content = contents.create_content(result, source, db)
+            contents_list.append(content)
             response_prompt.create_response_prompt(
                 ResponsePromptCreate(
-                    prompt_id=created_prompt_id,
-                    content_id=created_content.id,
+                    prompt_id=prompt_id,
+                    content_id=content.id,
                     ai_response_subject=ai_response_subject,
                     ai_response_description=ai_response_description,
                 ),
                 db,
             )
-        return list_of_contents
+        return contents_list
 
-    youtube_results = await save_results(
-        youtube_results, "youtube", created_prompt.id, db
-    )
-    reddit_results = await save_results(reddit_results, "reddit", created_prompt.id, db)
-    twitter_results = await save_results(
-        twitter_results, "twitter", created_prompt.id, db
-    )
+    aggregated_results = []
+    for source, results in search_results.items():
+        aggregated_results.extend(
+            await save_results_to_db(results, source, prompt.id, db)
+        )
 
-    all_sources_content = youtube_results + reddit_results + twitter_results
-
-    return PromptSubjectAndContents(
-        prompt=created_prompt,
+    return SubjectResources(
+        prompt=prompt,
         subject=ai_response_subject,
         description=ai_response_description,
-        contents=all_sources_content,
+        contents=aggregated_results,
     )
 
 
-async def LLMResponseSubjectSearchEngines(
-    prompt: Prompt, ai_response_subject: str, ai_response_description: str, db: Session
-) -> PromptSubjectAndContents:
-    query = f"{prompt.keywords} {ai_response_subject}"
-    youtube_results, reddit_results, twitter_results = await asyncio.gather(
-        __parse_results__(await __search__(query, YOUTUBE_SEARCH_ENGINE_ID), "youtube"),
-        __parse_results__(await __search__(query, REDDIT_SEARCH_ENGINE_ID), "reddit"),
-        __parse_results__(await __search__(query, TWITTER_SEARCH_ENGINE_ID), "twitter"),
+async def search_resources(
+    prompt_in_db: models.Prompt,
+    ai_response_subject: str,
+    ai_response_description: str,
+    db,
+):
+    """
+    Searches and processes the subject using various search engines.
+    """
+    query = f"{prompt_in_db.keywords} {ai_response_subject}"
+
+    # Perform searches in parallel
+    search_tasks = {
+        source: parse_search_results(await search(query, search_engine_id), source)
+        for source, search_engine_id in SEARCH_ENGINE_IDS.items()
+    }
+
+    # Wait for all searches to complete
+    search_results_raw = await asyncio.gather(*search_tasks.values())
+
+    # Rebuilding dictionary with sources and results
+    search_results = dict(zip(search_tasks.keys(), search_results_raw))
+
+    # Store results and return
+    return await store_results(
+        prompt_in_db, ai_response_subject, ai_response_description, search_results, db
     )
-    stored_data = await save_search_and_results(
-        prompt,
-        ai_response_subject,
-        ai_response_description,
-        youtube_results,
-        reddit_results,
-        twitter_results,
-        db,
-    )
-    return stored_data

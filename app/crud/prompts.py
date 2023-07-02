@@ -10,7 +10,7 @@ from app.crud.response_prompt import (
     get_three_response_prompts_by_id,
 )
 from app.schemas import prompts
-from app.schemas.contents import PromptSubjectAndContents, UserPromptSubjectAndContents
+from app.schemas.contents import SubjectResources, UserSubjectResources
 
 
 def get_prompt_by_id(prompt_id: int, db: Session) -> models.Prompt:
@@ -115,7 +115,7 @@ def get_content_by_id(content_id: int, db: Session):
     return db.query(models.Content).filter(models.Content.id == content_id).first()
 
 
-def get_prompt_contents(prompt_id: int, db: Session) -> UserPromptSubjectAndContents:
+def get_prompt_contents(prompt_id: int, db: Session) -> UserSubjectResources:
     db_prompt = get_prompt_by_id(prompt_id, db)
     if db_prompt is None:
         raise HTTPException(status_code=400, detail="Prompt not found.")
@@ -129,7 +129,7 @@ def get_prompt_contents(prompt_id: int, db: Session) -> UserPromptSubjectAndCont
     for db_response_prompt in db_response_prompts:
         db_contents.append(get_content_by_id(db_response_prompt.content_id, db))
 
-    return UserPromptSubjectAndContents(
+    return UserSubjectResources(
         user=db_user,
         prompt=db_prompt,
         subject=db_response_prompt.ai_response_subject,
@@ -138,9 +138,7 @@ def get_prompt_contents(prompt_id: int, db: Session) -> UserPromptSubjectAndCont
     )
 
 
-def get_prompt_contents_history(
-    prompt_id: int, db: Session
-) -> list[PromptSubjectAndContents]:
+def get_prompt_contents_history(prompt_id: int, db: Session) -> list[SubjectResources]:
     db_prompt = get_prompt_by_id(prompt_id, db)
     if db_prompt is None:
         raise HTTPException(status_code=400, detail="Prompt not found.")
@@ -171,7 +169,7 @@ def get_prompt_contents_history(
             processed_content_ids.add(content_id)
 
     result = [
-        PromptSubjectAndContents(
+        SubjectResources(
             prompt=db_prompt,
             subject=subject,
             description=description_contents_map[subject],

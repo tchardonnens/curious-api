@@ -7,8 +7,8 @@ from app import models
 from app.crud import follows, prompts
 from app.database import SessionLocal, engine
 from app.schemas.contents import (
-    PromptSubjectAndContents,
-    UserPromptSubjectAndContents,
+    SubjectResources,
+    UserSubjectResources,
 )
 from app.schemas.prompts import PromptBase, Prompt
 from app.schemas.users import User
@@ -48,7 +48,7 @@ async def get_prompts(
 
 @router.get(
     "/prompts/profile/me",
-    response_model=list[PromptSubjectAndContents],
+    response_model=list[SubjectResources],
     tags=["prompts"],
 )
 async def get_prompts(
@@ -90,7 +90,7 @@ async def create_prompt(
 
 @router.get(
     "/prompts/{prompt_id}/contents",
-    response_model=list[PromptSubjectAndContents],
+    response_model=list[SubjectResources],
     tags=["prompts"],
 )
 async def get_prompt_contents(
@@ -124,9 +124,7 @@ async def change_prompt_visibility(
         )
 
 
-@router.get(
-    "/feed", response_model=list[UserPromptSubjectAndContents], tags=["prompts"]
-)
+@router.get("/feed", response_model=list[UserSubjectResources], tags=["prompts"])
 async def get_feed(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),

@@ -5,7 +5,7 @@ from langchain.chains import LLMChain
 from langchain.output_parsers import OutputFixingParser
 from langchain.output_parsers import PydanticOutputParser
 
-from app.schemas.openai_response import (
+from app.schemas.llm import (
     json_template,
     LLMResponse,
 )

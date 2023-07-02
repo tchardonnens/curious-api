@@ -10,13 +10,13 @@ from app import models
 from app.crud import prompts
 from app.database import SessionLocal, engine
 from sqlalchemy.orm import Session
-from app.schemas.openai_response import LLMResponse, Subject, CuriousInput
-from app.schemas.contents import PromptSubjectAndContents
+from app.schemas.llm import LLMResponse, Subject, CuriousInput
+from app.schemas.contents import SubjectResources
 from app.schemas.prompts import PromptCreate
 from app.schemas.users import User
 from app.services.auth import get_current_user
 from app.services.chatgpt import gpt_json_response
-from app.services.search import LLMResponseSubjectSearchEngines
+from app.services.search import search_resources
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -53,26 +53,26 @@ async def chat(request: CuriousInput, current_user: User = Depends(get_current_u
         logging.info("Cache hit")
         response: str = cache.get(request)
         json_dict = json.loads(response)
-        ai_response = LLMResponse.parse_obj(json_dict)
+        llm_answer = LLMResponse.parse_obj(json_dict)
     else:
         logging.info("Cache miss")
-        ai_response: LLMResponse = gpt_json_response(request)
-        json_string = ai_response.json()
+        llm_answer: LLMResponse = gpt_json_response(request)
+        json_string = llm_answer.json()
         cache.set(request, str(json_string))
 
     if (
-        ai_response.basic_subjects[0].detailed_name
-        or ai_response.deeper_subjects[0].detailed_name
-        or ai_response.main_subject_of_the_prompt
+        llm_answer.basic_subjects[0].detailed_name
+        or llm_answer.deeper_subjects[0].detailed_name
+        or llm_answer.main_subject_of_the_prompt
     ) == "string":
         raise HTTPException(status_code=404, detail="Subject not found")
     else:
-        return ai_response.json()
+        return llm_answer.json()
 
 
 @router.post(
     "/curious",
-    response_model=list[PromptSubjectAndContents],
+    response_model=list[SubjectResources],
     response_description="ChatGPT response and Google retrieved contents",
     tags=["contents"],
 )
@@ -86,60 +86,60 @@ async def curious(
     if cached_response:
         logging.info("Cache hit")
         json_dict = json.loads(cached_response)
-        ai_response = LLMResponse.parse_obj(json_dict)
+        llm_answer = LLMResponse.parse_obj(json_dict)
     else:
         logging.info("Cache miss")
-        ai_response = gpt_json_response(request.prompt)
-        json_string = ai_response.json()
+        llm_answer = gpt_json_response(request.prompt)
+        json_string = llm_answer.json()
         cache.set(request.prompt, json_string)
 
-    all_prompt_subjects_and_contents = []
+    all_resources_for_prompt = []
 
-    async def process_subjects(
-        prompt: str,
+    async def search_contents_for_subjects(
+        prompt_in_db: models.Prompt,
         subjects: list[Subject],
-        all_prompt_subjects_and_contents: list[PromptSubjectAndContents],
+        all_resources_for_prompt: list[SubjectResources],
     ):
         for subject in subjects:
-            prompt_subject_and_contents = await LLMResponseSubjectSearchEngines(
-                prompt, subject.detailed_name, subject.description, db
+            resources = await search_resources(
+                prompt_in_db, subject.detailed_name, subject.description, db
             )
-            all_prompt_subjects_and_contents.append(prompt_subject_and_contents)
-        return all_prompt_subjects_and_contents
+            all_resources_for_prompt.append(resources)
+        return all_resources_for_prompt
 
     created_prompt = prompts.create_prompt(
         PromptCreate(
             title=request.prompt,
-            keywords=ai_response.main_subject_of_the_prompt,
+            keywords=llm_answer.main_subject_of_the_prompt,
             is_private=request.is_private,
             user_id=current_user.id,
         ),
         db,
     )
 
-    if ai_response.basic_subjects != "string":
-        all_prompt_subjects_and_contents = await process_subjects(
+    if llm_answer.basic_subjects != "string":
+        all_resources_for_prompt = await search_contents_for_subjects(
             created_prompt,
-            ai_response.basic_subjects,
-            all_prompt_subjects_and_contents,
+            llm_answer.basic_subjects,
+            all_resources_for_prompt,
         )
     else:
         raise HTTPException(
             status_code=404, detail="No basic subjects found, LLM failed"
         )
 
-    if ai_response.deeper_subjects != "string":
-        all_prompt_subjects_and_contents = await process_subjects(
+    if llm_answer.deeper_subjects != "string":
+        all_resources_for_prompt = await search_contents_for_subjects(
             created_prompt,
-            ai_response.deeper_subjects,
-            all_prompt_subjects_and_contents,
+            llm_answer.deeper_subjects,
+            all_resources_for_prompt,
         )
     else:
         raise HTTPException(
             status_code=404, detail="No deeper subjects found, LLM failed"
         )
 
-    return all_prompt_subjects_and_contents
+    return all_resources_for_prompt
 
 
 @router.on_event("shutdown")

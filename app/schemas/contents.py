@@ -24,28 +24,12 @@ class Content(ContentBase):
         orm_mode = True
 
 
-class AllSourcesContent(BaseModel):
-    youtube: list[Content]
-    reddit: list[Content]
-    twitter: list[Content]
-
-
-class SubjectAndContents(BaseModel):
-    subject: Prompt
-    description: str
-    content: AllSourcesContent
-
-
-class PromptSubjectAndContents(BaseModel):
+class SubjectResources(BaseModel):
     prompt: Prompt
     subject: str
     description: str
     contents: list[Content]
 
 
-class UserPromptSubjectAndContents(BaseModel):
+class UserSubjectResources(SubjectResources):
     user: User
-    prompt: Prompt
-    subject: str
-    description: str
-    contents: list[Content]
